@@ -1,96 +1,123 @@
-# Authenticode signing (plan Step 9)
+# Release signing (plan Step 9)
 
-Sign the published single-file exe so Windows SmartScreen and users can verify
-origin and integrity. Re-sign after **every** republish — rebuilding changes the
-bytes and voids any prior signature.
+Releases are signed with **GnuPG detached signatures** (OpenPGP), the same
+mechanism used by Bitcoin Core, Electrum, and Tails. A detached `.asc` rides
+alongside the `.exe`; users verify it against the published public key.
 
-Target file:
+This is **not** Windows Authenticode — it does not remove the SmartScreen
+"unknown publisher" prompt. It proves the binary came from the holder of the
+signing key and was not altered. For this air-gapped, key-handling tool aimed at
+a crypto-literate audience, that is the relevant integrity guarantee. An
+Authenticode cert (self-signed for local use, or Azure Trusted Signing / a CA
+for public trust) would be a separate, additional step — see the end of this
+file.
+
+## Signing key
+
+```text
+pub   rsa4096/EAF050539D0B2925  2020-10-27  [SC]
+      6B6BC26599EC24EF7E29A405EAF050539D0B2925
+uid   odolvlobo <odolvlobo@bitcointalk.com>
+```
+
+Managed in Kleopatra (Gpg4win). The private key never leaves the GnuPG keyring;
+`gpg-agent` handles the passphrase prompt.
+
+Tools used:
+
+- `gpg.exe` — `C:\Program Files (x86)\GnuPG\bin\gpg.exe` (GnuPG 2.4.5, Gpg4win).
+  Note: do **not** use the Git-bundled `gpg` (`...\Git\usr\bin\gpg.exe`) — it has
+  a separate, empty keyring and cannot see this key.
+
+## Target file
 
 ```text
 bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe
 ```
 
-This is the self-contained bundle; signing this one exe is sufficient (the
-bundled runtime/DLLs live inside it).
-
-## Prerequisites
-
-- A code-signing certificate. One of:
-  - **OV cert** as a `.pfx` file (+ password), or imported into the Windows
-    certificate store.
-  - **EV cert** on a hardware token / HSM (USB dongle or cloud KMS). Required for
-    immediate SmartScreen reputation. The private key never leaves the token —
-    you sign by subject name and enter the token PIN when prompted.
-- `signtool.exe` from the Windows SDK (installed with VS 2026). Typical path:
-
-  ```text
-  C:\Program Files (x86)\Windows Kits\10\bin\<sdk-version>\x64\signtool.exe
-  ```
-
-  Or open **Developer Command Prompt for VS 2026** and `signtool` is on PATH.
+Re-sign after **every** republish — the signature binds to the exact bytes, so
+any rebuild voids the prior `.asc`. Order: **publish -> sign -> distribute**.
 
 ## Sign
 
-Always include an RFC 3161 timestamp (`/tr` + `/td`) so the signature stays valid
-after the certificate expires. Pick the form matching how your key is stored.
-
-### A. PFX file
-
 ```powershell
-signtool sign /fd SHA256 `
-  /f "C:\path\to\cert.pfx" /p "<pfx-password>" `
-  /tr http://timestamp.digicert.com /td SHA256 `
-  "bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe"
+$gpg = "C:\Program Files (x86)\GnuPG\bin\gpg.exe"
+$exe = "bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe"
+
+& $gpg --local-user 6B6BC26599EC24EF7E29A405EAF050539D0B2925 `
+       --armor --detach-sign $exe
 ```
 
-### B. Certificate in the Windows store (by thumbprint)
+Produces `BtcAddress.exe.asc` next to the exe. Kleopatra/pinentry prompts for the
+passphrase unless `gpg-agent` has it cached.
+
+## Verify (locally, after signing)
 
 ```powershell
-signtool sign /fd SHA256 `
-  /sha1 <CERT-THUMBPRINT-NO-SPACES> `
-  /tr http://timestamp.digicert.com /td SHA256 `
-  "bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe"
+& $gpg --verify "$exe.asc" $exe
 ```
 
-### C. EV cert on hardware token (by subject name)
+Expect:
+
+```text
+gpg: Good signature from "odolvlobo <odolvlobo@bitcointalk.com>" [ultimate]
+```
+
+## Distribute
+
+Publish **both** files together:
+
+```text
+BtcAddress.exe
+BtcAddress.exe.asc
+```
+
+## Publish the public key (so others can verify)
+
+Export and host the public key (your website, the repo, a GitHub release), and/or
+push it to a keyserver:
 
 ```powershell
-signtool sign /fd SHA256 `
-  /n "Your Cert Subject Name" `
-  /tr http://timestamp.digicert.com /td SHA256 `
-  "bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe"
+# Export to a file to host alongside releases
+& $gpg --armor --export 6B6BC26599EC24EF7E29A405EAF050539D0B2925 > odolvlobo.asc
+
+# Optional: publish to a keyserver
+& $gpg --keyserver hkps://keys.openpgp.org `
+       --send-keys 6B6BC26599EC24EF7E29A405EAF050539D0B2925
 ```
 
-Token prompts for its PIN during signing.
+Always publish the **full fingerprint** `6B6BC26599EC24EF7E29A405EAF050539D0B2925`
+out-of-band so users pin the right key (a short key id is forgeable).
 
-Alternate timestamp server if DigiCert is unreachable:
-`http://timestamp.sectigo.com`.
+### What a downloader runs
 
-## Verify
-
-```powershell
-signtool verify /pa /v "bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe"
+```text
+gpg --recv-keys 6B6BC26599EC24EF7E29A405EAF050539D0B2925   # or import odolvlobo.asc
+gpg --verify BtcAddress.exe.asc BtcAddress.exe
 ```
 
-Expect `Successfully verified` and a non-empty timestamp line.
+A `Good signature` line with that fingerprint means the exe is authentic and
+intact.
 
-## Record the thumbprint
+## Security notes
 
-Note the signing cert thumbprint in your release record:
+- **Never** export or commit the secret key. Keep it in the keyring; sign locally
+  on a trusted machine. A leaked signing key lets an attacker ship a trojaned
+  build under this identity — and this tool generates private keys.
+- Build and sign on your own machine, not in cloud CI, to keep the key and the
+  build off third-party infrastructure.
+- The `.asc` and `.exe` are release artifacts (under `bin\`), not source — they
+  are not committed to the repo; attach them to the release/download instead.
 
-```powershell
-(Get-AuthenticodeSignature "bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe").SignerCertificate.Thumbprint
-```
+## Optional: Windows Authenticode (separate, not done here)
 
-Should also report `Status : Valid`.
+To also drop the SmartScreen "unknown publisher" warning, sign with an X.509
+code-signing certificate using `signtool` (Windows SDK). This needs a cert the
+GPG key cannot provide:
 
-## Notes
+- **Self-signed** — free, immediate; trusted only on machines where you install
+  the cert into Trusted Root + Trusted Publishers. Fine for personal use.
+- **Azure Trusted Signing** (~$10/mo, Microsoft-rooted) or an OV/EV cert from a
+  CA — required for public trust; subject to identity validation.
 
-- **Security:** never commit the `.pfx` or its password to the repo. Keep keys
-  off the build machine if possible (token/HSM). This tool handles private keys —
-  a compromised signing key lets an attacker ship a trojaned build under your
-  identity.
-- Order matters: **publish → sign → distribute**. Signing must be the last step;
-  any later edit (even re-zipping) requires re-signing.
-- SmartScreen reputation builds over download volume for OV certs; EV certs get
-  it immediately.
+Authenticode and GPG are independent and can both be applied to the same exe.

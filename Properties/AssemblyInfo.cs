@@ -27,7 +27,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Casascius")]
 [assembly: AssemblyProduct("BtcAddress")]
-[assembly: AssemblyCopyright("Copyright Mike Caldwell")]
+[assembly: AssemblyCopyright("Copyright (C) 2012 Mike Caldwell, (C) 2026 odolvlobo")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 

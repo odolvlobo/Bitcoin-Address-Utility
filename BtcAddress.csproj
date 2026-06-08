@@ -14,8 +14,10 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Company>Casascius</Company>
     <Product>BtcAddress</Product>
-    <Copyright>Copyright Mike Caldwell</Copyright>
-    <Version>1.0.0.0</Version>
+    <Copyright>Copyright (C) 2012 Mike Caldwell, (C) 2026 odolvlobo</Copyright>
+   <Version>1.0.0.0</Version>
+    <!-- Normalize embedded source/pdb paths to project-relative. -->
+    <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BouncyCastle.Cryptography" Version="2.*" />
