@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -19,19 +19,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Security.Cryptography;
+using System.Text;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace Casascius.Bitcoin {
-    public class EscrowCodeSet {
+namespace Casascius.Bitcoin
+{
+    public class EscrowCodeSet
+    {
 
         private const long headbaseA = 0x140bebc0a12ca9c6L;
         private const long headbaseB = 0x140bebc16ae0563bL;
@@ -80,7 +82,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Default constructor.  Creates a new matched pair of escrow invitation codes.
         /// </summary>
-        public EscrowCodeSet() {
+        public EscrowCodeSet()
+        {
             SecureRandom sr = new SecureRandom();
 
             byte[] x = new byte[32];
@@ -125,7 +128,8 @@ namespace Casascius.Bitcoin {
             long headB = headbaseB + (long)identifier30;
 
             // turn headA and headB into bytes
-            for (int i = 7; i >= 0; i--) {
+            for (int i = 7; i >= 0; i--)
+            {
                 invitationA[i] = (byte)(headA & 0xFF);
                 invitationB[i] = (byte)(headB & 0xFF);
                 headA >>= 8;
@@ -144,7 +148,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Constructor that takes a single Escrow Invitation Code and produces a Payment Invitation Code.
         /// </summary>
-        public EscrowCodeSet(string escrowInvitationCode, bool doCompressed=false, byte networkByte = 0) {
+        public EscrowCodeSet(string escrowInvitationCode, bool doCompressed = false, byte networkByte = 0)
+        {
             byte[] pubpart, privpart;
             int identifier30;
             string failreason = parseEscrowCode(escrowInvitationCode, out pubpart, out privpart, out identifier30);
@@ -154,7 +159,8 @@ namespace Casascius.Bitcoin {
             // (we expect LSB of einva's private part to be 0 and LSB of einvb's private part to be 1)
             // (this is to guarantee that einva's and einvb's private parts aren't equal)
             if ((escrowInvitationCode.StartsWith("einva") && (privpart[31] & 0x01) == 1) ||
-                (escrowInvitationCode.StartsWith("einvb") && (privpart[31] & 0x01) == 0)) {
+                (escrowInvitationCode.StartsWith("einvb") && (privpart[31] & 0x01) == 0))
+            {
                 throw new ArgumentException("This escrow invitation has mismatched parity.  Ask your escrow agent to " +
                     "generate a new pair using the latest version of the software.");
             }
@@ -162,8 +168,10 @@ namespace Casascius.Bitcoin {
             // Look for 48 0's or 48 1's
             if (privpart[0] == privpart[1] && privpart[1] == privpart[2] && privpart[2] == privpart[3] &&
                privpart[3] == privpart[4] && privpart[4] == privpart[5] && privpart[5] == privpart[6] &&
-               privpart[6] == privpart[7] && privpart[7] == privpart[8]) {
-                if (privpart[0] == 0x00 || privpart[0] == 0xFF) {
+               privpart[6] == privpart[7] && privpart[7] == privpart[8])
+            {
+                if (privpart[0] == 0x00 || privpart[0] == 0xFF)
+                {
                     throw new ArgumentException("This escrow invitation is invalid and cannot be used (bad private key).");
                 }
             }
@@ -182,19 +190,21 @@ namespace Casascius.Bitcoin {
             PublicKey pkxyz = new PublicKey(Gxyz.GetEncoded(false));
             byte[] hash160 = pkxyz.Hash160;
             BitcoinAddress = new AddressBase(hash160, networkByte).AddressBase58;
-            
+
             // make the payment invitation record
             byte[] invp = new byte[74];
             long headP = headbaseP + (long)identifier30;
-            for (int i = 7; i >= 0; i--) {
+            for (int i = 7; i >= 0; i--)
+            {
                 invp[i] = (byte)(headP & 0xff);
                 headP >>= 8;
             }
             invp[8] = networkByte;
             Array.Copy(z, 0, invp, 8 + 1 + 1, 32);
-            
+
             // set flag to indicate if einvb was used to generate this, and make it available in the object
-            if (escrowInvitationCode.StartsWith("einvb")) {
+            if (escrowInvitationCode.StartsWith("einvb"))
+            {
                 invp[8 + 1 + 1 + 32 + 20] = 0x2;
             }
 
@@ -209,12 +219,14 @@ namespace Casascius.Bitcoin {
         /// Constructor that calculates the address given one escrow invitation code and one matching payment invitation code.
         /// They can be provided in any order.
         /// </summary>
-        public EscrowCodeSet(string code1, string code2) {
-            if (code1 == null || code2 == null || code1 == "" || code2 == "") {
+        public EscrowCodeSet(string code1, string code2)
+        {
+            if (code1 == null || code2 == null || code1 == "" || code2 == "")
+            {
                 throw new ArgumentException("Two codes are required to use this function.");
             }
 
-            string escrowInvitationCode=null, paymentInvitationCode=null;
+            string escrowInvitationCode = null, paymentInvitationCode = null;
 
             if (code1.StartsWith("einva") || code1.StartsWith("einvb")) escrowInvitationCode = code1;
             if (code2.StartsWith("einva") || code2.StartsWith("einvb")) escrowInvitationCode = code2;
@@ -222,7 +234,8 @@ namespace Casascius.Bitcoin {
             if (code2.StartsWith("einvp")) paymentInvitationCode = code2;
 
 
-            if (escrowInvitationCode == null || paymentInvitationCode == null) {
+            if (escrowInvitationCode == null || paymentInvitationCode == null)
+            {
                 throw new ArgumentException("In order to use this function, one code MUST be an Escrow Invitation (starting " +
                     "with \"einva\" or \"einvb\") and the other code MUST be a Payment Invitation (starting with \"einvp\").");
             }
@@ -248,14 +261,15 @@ namespace Casascius.Bitcoin {
             long identifier30L = head - headbaseP;
             if (identifier30L < 0 || identifier30L > 0x3FFFFFFFL) throw new ArgumentException(notvalid);
 
-            if ((long)identifier30 != identifier30L) {
+            if ((long)identifier30 != identifier30L)
+            {
                 throw new ArgumentException(notvalid3);
             }
 
             byte[] privpartz = new byte[32];
             Array.Copy(invbytes, 8 + 1 + 1, privpartz, 0, 32);
             byte networkByte = invbytes[8];
-            bool compressedFlag = (invbytes[8+1+1+32+20] & 0x1) == 1;
+            bool compressedFlag = (invbytes[8 + 1 + 1 + 32 + 20] & 0x1) == 1;
 
 
             // get bitcoin address
@@ -270,8 +284,10 @@ namespace Casascius.Bitcoin {
             BitcoinAddress = new AddressBase(addrhash160, networkByte).AddressBase58;
 
             // Does the hash160 match?
-            for (int i = 0; i < 20; i++) {
-                if (addrhash160[i] != invbytes[8+1+1+32+i]) {
+            for (int i = 0; i < 20; i++)
+            {
+                if (addrhash160[i] != invbytes[8 + 1 + 1 + 32 + i])
+                {
                     throw new ArgumentException(notvalid3);
                 }
             }
@@ -279,7 +295,8 @@ namespace Casascius.Bitcoin {
             this.PaymentInvitationCode = paymentInvitationCode;
 
             byte expectedabflag = (byte)(escrowInvitationCode.StartsWith("einva") ? 2 : 0);
-            if ((invbytes[8+1+1+32+20] & 0x2) != expectedabflag) {
+            if ((invbytes[8 + 1 + 1 + 32 + 20] & 0x2) != expectedabflag)
+            {
                 SamePartyWarningApplies = true;
             }
         }
@@ -288,12 +305,14 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Constructor which attempts to redeem a completed set of three codes, and calculate the private key.
         /// </summary>
-        public EscrowCodeSet(string code1, string code2, string code3) {
-            if (code1 == null || code2 == null || code3 == null || code1 == "" || code2 == "" || code3 == "") {
+        public EscrowCodeSet(string code1, string code2, string code3)
+        {
+            if (code1 == null || code2 == null || code3 == null || code1 == "" || code2 == "" || code3 == "")
+            {
                 throw new ArgumentException("Three codes are required to use this function.");
             }
 
-            string codea = null, codeb=null, codep = null;
+            string codea = null, codeb = null, codep = null;
 
             if (code1.StartsWith("einva")) codea = code1;
             if (code2.StartsWith("einva")) codea = code2;
@@ -306,7 +325,8 @@ namespace Casascius.Bitcoin {
             if (code3.StartsWith("einvp")) codep = code3;
 
 
-            if (codea==null || codeb == null || codep == null) {
+            if (codea == null || codeb == null || codep == null)
+            {
                 throw new ArgumentException("In order to use this function, one code MUST be an Escrow Invitation A (starting " +
                     "with \"einva\"), one must be an Escrow Invitation B (starting with \"einvb\") and the last " +
                     "code MUST be a Payment Invitation (starting with \"einvp\").");
@@ -323,12 +343,13 @@ namespace Casascius.Bitcoin {
             failreason = parseEscrowCode(codeb, out pubpartb, out privpartb, out identifier30b);
             if (failreason != null) throw new ArgumentException("Escrow Invitation Code B: " + failreason);
 
-            if (identifier30a != identifier30b) {
+            if (identifier30a != identifier30b)
+            {
                 throw new ArgumentException("The two Escrow Invitations are not mates and cannot unlock the private key.");
             }
 
 
-            
+
             string notvalid = "Not a valid Payment Invitation Code";
             string notvalid2 = "Code is not a valid Payment Invitation Code or may have a typo or other error.";
 
@@ -340,7 +361,8 @@ namespace Casascius.Bitcoin {
             long identifier30L = headp - headbaseP;
             if (identifier30L < 0 || identifier30L > 0x3FFFFFFFL) throw new ArgumentException(notvalid);
 
-            if (identifier30L != (long)identifier30a) {
+            if (identifier30L != (long)identifier30a)
+            {
                 throw new ArgumentException("The Payment Invitation was not generated from either of the provided Escrow Invitation codes and cannot be unlocked by them.");
             }
 
@@ -362,25 +384,27 @@ namespace Casascius.Bitcoin {
             this.EscrowInvitationCodeB = codeb;
             this.PaymentInvitationCode = codep;
             this.BitcoinAddress = kp.AddressBase58;
-            this.PrivateKey = kp.PrivateKey;           
+            this.PrivateKey = kp.PrivateKey;
 
         }
 
 
 
-        private void setAddressConfirmationCode(int identifier30, byte networkbyte, byte flagbyte, byte[] z, byte[] hash160) {
+        private void setAddressConfirmationCode(int identifier30, byte networkbyte, byte flagbyte, byte[] z, byte[] hash160)
+        {
             byte[] accbytes = new byte[74];
             long head = headconfP + (int)identifier30;
-            for (int i=7; i>=0; i--) {
+            for (int i = 7; i >= 0; i--)
+            {
                 accbytes[i] = (byte)(head & 0x7F);
                 head >>= 8;
             }
-            accbytes[8]=networkbyte;
+            accbytes[8] = networkbyte;
 
             byte[] Gzbytes = new KeyPair(z, true).GetECPoint().GetEncoded(true);
-            Array.Copy(Gzbytes, 0, accbytes, 8+1, 33);
-            Array.Copy(hash160, 0, accbytes, 8+1+33, 20);
-            accbytes[8+1+33+20] = flagbyte;
+            Array.Copy(Gzbytes, 0, accbytes, 8 + 1, 33);
+            Array.Copy(hash160, 0, accbytes, 8 + 1 + 33, 20);
+            accbytes[8 + 1 + 33 + 20] = flagbyte;
             this.AddressConfirmationCode = Util.ByteArrayToBase58Check(accbytes);
 
         }
@@ -389,7 +413,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Parses an escrow invitation code, returning null (plus the out parts) if valid, and returns a string reason if not.
         /// </summary>
-        private string parseEscrowCode(string thecode, out byte[] pubpart, out byte[] privpart, out int identifier30) {
+        private string parseEscrowCode(string thecode, out byte[] pubpart, out byte[] privpart, out int identifier30)
+        {
             pubpart = null;
             privpart = null;
             identifier30 = 0;
@@ -397,7 +422,8 @@ namespace Casascius.Bitcoin {
             string notvalid = "Not a valid Escrow Invitation Code";
             string notvalid2 = "Code is not a valid Escrow Invitation Code or may have a typo or other error.";
 
-            if (thecode.StartsWith("einva") == false && thecode.StartsWith("einvb") == false) {
+            if (thecode.StartsWith("einva") == false && thecode.StartsWith("einvb") == false)
+            {
                 return notvalid;
             }
 
@@ -407,9 +433,12 @@ namespace Casascius.Bitcoin {
             string failReason = parseEitherCode(thecode, notvalid, notvalid2, out invbytes, out head);
 
             if (head < headbaseA) return notvalid;
-            if (head < headbaseB) {
+            if (head < headbaseB)
+            {
                 identifier30L = head - headbaseA;
-            } else {
+            }
+            else
+            {
                 identifier30L = head - headbaseB;
             }
             if (identifier30L < 0 || identifier30L > 0x3FFFFFFFL) return notvalid;
@@ -419,27 +448,33 @@ namespace Casascius.Bitcoin {
             pubpart = new byte[33];
             Array.Copy(invbytes, 8 + 1, privpart, 0, 32);
             Array.Copy(invbytes, 8 + 1 + 32, pubpart, 0, 33);
-            if (thecode.StartsWith("einvb")) {
+            if (thecode.StartsWith("einvb"))
+            {
                 EscrowInvitationCodeB = thecode;
-            } else {
+            }
+            else
+            {
                 EscrowInvitationCodeA = thecode;
             }
 
             return null;
         }
 
-        private string parseEitherCode(string thecode, string notvalid, string notvalid2, out byte[] invbytes, out Int64 head) {
+        private string parseEitherCode(string thecode, string notvalid, string notvalid2, out byte[] invbytes, out Int64 head)
+        {
             invbytes = null;
             head = 0L;
             if (thecode == null) return notvalid;
             invbytes = Util.Base58CheckToByteArray(thecode);
-            if (invbytes == null) {
+            if (invbytes == null)
+            {
                 return notvalid2;
             }
 
             if (invbytes.Length != 74) return notvalid;
-            
-            for (int i = 0; i < 8; i++) {
+
+            for (int i = 0; i < 8; i++)
+            {
                 head <<= 8;
                 head += invbytes[i];
             }

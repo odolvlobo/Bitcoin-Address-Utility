@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -18,22 +18,23 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Security.Cryptography;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using CryptSharp.Utility;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Math;
-using CryptSharp.Utility;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace Casascius.Bitcoin {
+namespace Casascius.Bitcoin
+{
     /// <summary>
     /// Represents a private key encrypted with AES using the SHA256 of a passphrase as key material.
     /// Such a private key is a xx character string starting with "6p" (lowercase p).
@@ -41,24 +42,32 @@ namespace Casascius.Bitcoin {
     /// not a user-chosen password.  It's suitable for fast wallet encryption/decryption given key
     /// material that has been properly derived elsewhere.
     /// </summary>
-    public class ShaPassphraseKeyPair : PassphraseKeyPair {
+    public class ShaPassphraseKeyPair : PassphraseKeyPair
+    {
 
         /// <summary>
         /// Load constructor (in preparation for decryption)
         /// </summary>
-        public ShaPassphraseKeyPair(string encryptedkey) : base() {
+        public ShaPassphraseKeyPair(string encryptedkey) : base()
+        {
             this._encryptedKey = encryptedkey;
 
             byte[] hex = Util.Base58CheckToByteArray(encryptedkey);
 
-            if (hex == null) {
+            if (hex == null)
+            {
                 throw new ArgumentException("Not a valid key");
-            } else if (hex.Length == 36 && hex[0] == 0x02 && hex[1] == 0x05 && hex[2] <= 0x80) {
+            }
+            else if (hex.Length == 36 && hex[0] == 0x02 && hex[1] == 0x05 && hex[2] <= 0x80)
+            {
                 // Apparently valid. Read the compressed point flag.
-                if ((hex[3] & 0x01) == 0x01) {
+                if ((hex[3] & 0x01) == 0x01)
+                {
                     IsCompressedPoint = true;
                 }
-            } else {
+            }
+            else
+            {
                 throw new ArgumentException("Not a valid key");
             }
         }
@@ -69,8 +78,10 @@ namespace Casascius.Bitcoin {
         /// The resulting key pair record retains the public key and bitcoin address
         /// but not the passphrase or the unencrypted private key.
         /// </summary>
-        public ShaPassphraseKeyPair(KeyPair key, string passphrase) {
-            if (passphrase == null || passphrase == "") {
+        public ShaPassphraseKeyPair(KeyPair key, string passphrase)
+        {
+            if (passphrase == null || passphrase == "")
+            {
                 throw new ArgumentException("Passphrase is required");
             }
 
@@ -110,18 +121,22 @@ namespace Casascius.Bitcoin {
             this._encryptedKey = Util.ByteArrayToBase58Check(rv);
         }
 
-        public override bool DecryptWithPassphrase(string passphrase) {
+        public override bool DecryptWithPassphrase(string passphrase)
+        {
 
             byte[] hex = Util.Base58CheckToByteArray(_encryptedKey);
 
-            if (passphrase == null || passphrase == "") {
+            if (passphrase == null || passphrase == "")
+            {
                 return false;
             }
 
             byte[] checksum = Util.ComputeSha256(passphrase + "?");
 
-            if (hex[2] != 0x80) {
-                if ((checksum[0] & 0x7f) != hex[2] || (checksum[1] & 0x7e) != (hex[3] & 0x7e)) {
+            if (hex[2] != 0x80)
+            {
+                if ((checksum[0] & 0x7f) != hex[2] || (checksum[1] & 0x7e) != (hex[3] & 0x7e))
+                {
                     return false;
                 }
             }

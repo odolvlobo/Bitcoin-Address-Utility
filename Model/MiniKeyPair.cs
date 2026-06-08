@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -18,23 +18,26 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Security.Cryptography;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace Casascius.Bitcoin {
+namespace Casascius.Bitcoin
+{
 
-    public class MiniKeyPair : KeyPair {
-		
-        public static MiniKeyPair CreateDeterministic(string seed) {
+    public class MiniKeyPair : KeyPair
+    {
+
+        public static MiniKeyPair CreateDeterministic(string seed)
+        {
 
             // flow:
             // 1. take SHA256 of seed to yield 32 bytes
@@ -46,35 +49,50 @@ namespace Casascius.Bitcoin {
             UTF8Encoding utf8 = new UTF8Encoding(false);
             byte[] sha256ofseed = Util.ComputeSha256(seed);
 
-            string asbase58 = new KeyPair(sha256ofseed).PrivateKeyBase58.Replace("1","");
+            string asbase58 = new KeyPair(sha256ofseed).PrivateKeyBase58.Replace("1", "");
 
             string keytotry = "S" + asbase58.Substring(4, 29);
             char[] chars = keytotry.ToCharArray();
             char[] charstest = (keytotry + "?").ToCharArray();
-            
-            while (Util.ComputeSha256(utf8.GetBytes(charstest))[0] != 0) {
+
+            while (Util.ComputeSha256(utf8.GetBytes(charstest))[0] != 0)
+            {
                 // As long as key doesn't pass typo check, increment it.
-                for (int i = chars.Length - 1; i >= 0; i--) {
+                for (int i = chars.Length - 1; i >= 0; i--)
+                {
                     char c = chars[i];
-                    if (c == '9') {
-                        charstest[i] = chars[i] = 'A';                        
+                    if (c == '9')
+                    {
+                        charstest[i] = chars[i] = 'A';
                         break;
-                    } else if (c == 'H') {
+                    }
+                    else if (c == 'H')
+                    {
                         charstest[i] = chars[i] = 'J';
                         break;
-                    } else if (c == 'N') {
+                    }
+                    else if (c == 'N')
+                    {
                         charstest[i] = chars[i] = 'P';
                         break;
-                    } else if (c == 'Z') {
+                    }
+                    else if (c == 'Z')
+                    {
                         charstest[i] = chars[i] = 'a';
                         break;
-                    } else if (c == 'k') {
+                    }
+                    else if (c == 'k')
+                    {
                         charstest[i] = chars[i] = 'm';
                         break;
-                    } else if (c == 'z') {
+                    }
+                    else if (c == 'z')
+                    {
                         charstest[i] = chars[i] = '2';
                         // No break - let loop increment prior character.
-                    } else {
+                    }
+                    else
+                    {
                         charstest[i] = chars[i] = ++c;
                         break;
                     }
@@ -88,41 +106,53 @@ namespace Casascius.Bitcoin {
         /// Entropy is taken from .NET's SecureRandom, the system clock,
         /// and any optionally provided salt.
         /// </summary>
-        public static MiniKeyPair CreateRandom(string usersalt) {
+        public static MiniKeyPair CreateRandom(string usersalt)
+        {
             if (usersalt == null) usersalt = "ok, whatever";
             usersalt += DateTime.UtcNow.Ticks.ToString();
             SecureRandom sr = new SecureRandom();
             char[] chars = new char[64];
-            for (int i = 0; i < 64; i++) {
+            for (int i = 0; i < 64; i++)
+            {
                 chars[i] = (char)(32 + (sr.NextInt() % 64));
             }
             return CreateDeterministic(usersalt + new String(chars));
         }
 
 
-        public MiniKeyPair(string key) {
+        public MiniKeyPair(string key)
+        {
             MiniKey = key;
         }
 
         /// <summary>
         /// Returns the private key in the most preferred display format for the type.
         /// </summary>
-        public override string PrivateKey {
-            get {
+        public override string PrivateKey
+        {
+            get
+            {
                 return MiniKey;
             }
         }
 
-        public string MiniKey {
-            get {
+        public string MiniKey
+        {
+            get
+            {
                 return _minikey;
             }
-            protected set {
+            protected set
+            {
                 _minikey = value;
-                if (value == null) {
+                if (value == null)
+                {
                     PrivateKeyBytes = null;
-                } else {
-                    if (IsValidMiniKey(value) <= 0) {
+                }
+                else
+                {
+                    if (IsValidMiniKey(value) <= 0)
+                    {
                         throw new ApplicationException("Not a valid minikey");
                     }
                     _minikey = value;
@@ -141,7 +171,8 @@ namespace Casascius.Bitcoin {
         /// Zero or negative indicates not a valid Mini Private Key.
         /// -1 means well formed but fails typo check.
         /// </summary>
-        public static int IsValidMiniKey(string candidate) {
+        public static int IsValidMiniKey(string candidate)
+        {
             if (candidate.Length != 22 && candidate.Length != 26 && candidate.Length != 30) return 0;
             if (candidate.StartsWith("S") == false) return 0;
             System.Text.RegularExpressions.Regex reg = new System.Text.RegularExpressions.Regex("^S[1-9A-HJ-NP-Za-km-z]{21,29}$");

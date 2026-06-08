@@ -18,39 +18,45 @@
 using Casascius.Bitcoin;
 using Xunit;
 
-namespace BtcAddress.UnitTests {
+namespace BtcAddress.UnitTests
+{
 
     // BIP38 encrypted keys. The no-EC-multiply path is deterministic, so it
     // matches the spec vector byte-for-byte; the EC-multiply path is checked
     // for round-trip self-consistency.
-    public class Bip38Tests {
+    public class Bip38Tests
+    {
 
         const string SpecWif = "5KN7MzqK5wt2TP1fQCYyHBtDrXdJuXbUzm4A9rKAteGu3Qi5CVR";
         const string SpecEnc = "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg";
         const string SpecPass = "TestingOneTwoThree";
 
         [Fact]
-        public void NoEcMultiply_Encrypt_MatchesSpecVector() {
+        public void NoEcMultiply_Encrypt_MatchesSpecVector()
+        {
             var known = new KeyPair(SpecWif);
             var enc = new Bip38KeyPair(known, SpecPass);
             Assert.Equal(SpecEnc, enc.EncryptedPrivateKey);
         }
 
         [Fact]
-        public void NoEcMultiply_Decrypt_RecoversWif() {
+        public void NoEcMultiply_Decrypt_RecoversWif()
+        {
             var dec = new Bip38KeyPair(SpecEnc);
             Assert.True(dec.DecryptWithPassphrase(SpecPass));
             Assert.Equal(SpecWif, dec.GetUnencryptedPrivateKey().PrivateKeyBase58);
         }
 
         [Fact]
-        public void NoEcMultiply_WrongPassphrase_Fails() {
+        public void NoEcMultiply_WrongPassphrase_Fails()
+        {
             var dec = new Bip38KeyPair(SpecEnc);
             Assert.False(dec.DecryptWithPassphrase("wrong passphrase"));
         }
 
         [Fact]
-        public void EcMultiply_RoundTrip_AddressMatches() {
+        public void EcMultiply_RoundTrip_AddressMatches()
+        {
             byte[] ownerentropy = new byte[8];
             new Org.BouncyCastle.Security.SecureRandom().NextBytes(ownerentropy);
 

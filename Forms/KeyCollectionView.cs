@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -21,32 +21,37 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Text;
-using System.IO;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
-using System.Drawing.Printing;
 using Casascius.Bitcoin;
 
 
-namespace BtcAddress.Forms {
-    public partial class KeyCollectionView : Form {
+namespace BtcAddress.Forms
+{
+    public partial class KeyCollectionView : Form
+    {
 
         public KeyCollection KeyCollection = new KeyCollection();
 
-        public KeyCollectionView() {
+        public KeyCollectionView()
+        {
             InitializeComponent();
         }
 
-        private void newAddressToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void newAddressToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             KeyPair kp = KeyPair.Create(ExtraEntropy.GetEntropy());
             KeyCollectionItem item = new KeyCollectionItem(kp);
             KeyCollection.AddItem(item);
         }
 
-        private void KeyCollectionView_Load(object sender, EventArgs e) {
+        private void KeyCollectionView_Load(object sender, EventArgs e)
+        {
             listView1.Columns[0].Width = 400;
             listView1.Columns[1].Width = 100;
             toolStripStatusLabel1.Text = "Click Address to generate some addresses.";
@@ -57,10 +62,12 @@ namespace BtcAddress.Forms {
             KeyCollection.ItemsDeleted += new Action<IEnumerable<KeyCollectionItem>>(KeyCollection_ItemsDeleted);
         }
 
-        void KeyCollection_ItemsDeleted(IEnumerable<KeyCollectionItem> items) {
+        void KeyCollection_ItemsDeleted(IEnumerable<KeyCollectionItem> items)
+        {
             Dictionary<KeyCollectionItem, ListViewItem> index = new Dictionary<KeyCollectionItem, ListViewItem>();
             foreach (ListViewItem lvi in listView1.Items) index.Add((KeyCollectionItem)lvi.Tag, lvi);
-            foreach (KeyCollectionItem kci in items) {
+            foreach (KeyCollectionItem kci in items)
+            {
                 if (index.ContainsKey(kci)) listView1.Items.Remove(index[kci]);
             }
             UpdateStatusLabel();
@@ -68,26 +75,33 @@ namespace BtcAddress.Forms {
 
         }
 
-        void UpdateStatusLabel() {
-            if (listView1.Items.Count == 1) {
+        void UpdateStatusLabel()
+        {
+            if (listView1.Items.Count == 1)
+            {
                 toolStripStatusLabel1.Text = "1 address";
-            } else {
+            }
+            else
+            {
                 toolStripStatusLabel1.Text = listView1.Items.Count + " addresses";
             }
 
         }
 
-        void KeyCollection_ItemsAdded(IEnumerable<KeyCollectionItem> obj) {
-            foreach (var item in obj) {
+        void KeyCollection_ItemsAdded(IEnumerable<KeyCollectionItem> obj)
+        {
+            foreach (var item in obj)
+            {
                 ListViewItem lvi = new ListViewItem(new string[] { item.ToString(), item.PrivateKeyKind, "0.00" });
                 lvi.Tag = item;
                 lvi.Checked = true;
-                listView1.Items.Add(lvi);                
+                listView1.Items.Add(lvi);
             }
             UpdateStatusLabel();
         }
 
-        void KeyCollection_ItemAdded(KeyCollectionItem item) {
+        void KeyCollection_ItemAdded(KeyCollectionItem item)
+        {
             ListViewItem lvi = new ListViewItem(new string[] { item.ToString(), item.PrivateKeyKind, "0.00" });
             lvi.Tag = item;
             lvi.Checked = true;
@@ -95,43 +109,55 @@ namespace BtcAddress.Forms {
             UpdateStatusLabel();
         }
 
-        private void generateKeysToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void generateKeysToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             var genform = new AddressGen();
             genform.ShowDialog();
-            if (genform.GeneratedItems != null && genform.GeneratedItems.Count > 0) {
+            if (genform.GeneratedItems != null && genform.GeneratedItems.Count > 0)
+            {
                 KeyCollection.AddItemRange(genform.GeneratedItems);
             }
         }
 
-        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             foreach (ListViewItem i in listView1.Items) i.Checked = true;
         }
-        private void deselectAllToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void deselectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             foreach (ListViewItem i in listView1.Items) i.Checked = false;
 
         }
 
-        private List<KeyCollectionItem> getEncryptedItemsToPrint() {
+        private List<KeyCollectionItem> getEncryptedItemsToPrint()
+        {
             List<KeyCollectionItem> itemsToPrint = new List<KeyCollectionItem>();
             int Unprintables = 0;
             //foreach (KeyCollectionItem i in KeyCollection.Items) {
-            foreach (ListViewItem lvi in listView1.Items) {
-                if (lvi.Checked) {
+            foreach (ListViewItem lvi in listView1.Items)
+            {
+                if (lvi.Checked)
+                {
                     KeyCollectionItem i = lvi.Tag as KeyCollectionItem;
-                    if (i.EncryptedKeyPair != null || (i.Address != null && i.Address is KeyPair)) {
+                    if (i.EncryptedKeyPair != null || (i.Address != null && i.Address is KeyPair))
+                    {
                         itemsToPrint.Add(i);
-                    } else {
+                    }
+                    else
+                    {
                         Unprintables++;
                     }
                 }
             }
-            if (itemsToPrint.Count == 0) {
+            if (itemsToPrint.Count == 0)
+            {
                 MessageBox.Show("No items with printable private keys are selected.",
                     "Can't print encrypted keys",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return null;
             }
-            if (Unprintables != 0) {
+            if (Unprintables != 0)
+            {
                 MessageBox.Show(Unprintables.ToString() + " of the selected items cannot be " +
                     "printed because the private key is not known.  These items will be skipped.",
                     "Can't print some items",
@@ -141,52 +167,64 @@ namespace BtcAddress.Forms {
         }
 
 
-        private void printBanknoteVouchersToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void printBanknoteVouchersToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             List<KeyCollectionItem> itemsToPrint = getEncryptedItemsToPrint();
             if (itemsToPrint == null) return;
             var printform = new PrintVouchers();
             printform.Items = itemsToPrint;
             printform.ShowDialog();
-            if (printform.PrintAttempted) {
-                foreach (ListViewItem lvi in listView1.Items) {
+            if (printform.PrintAttempted)
+            {
+                foreach (ListViewItem lvi in listView1.Items)
+                {
                     if (lvi.Checked) lvi.Checked = false;
 
                 }
             }
         }
 
-        private void listView1_ColumnClick(object sender, ColumnClickEventArgs e) {
+        private void listView1_ColumnClick(object sender, ColumnClickEventArgs e)
+        {
 
-            if (listView1.Sorting == SortOrder.Ascending) {
+            if (listView1.Sorting == SortOrder.Ascending)
+            {
                 listView1.Sorting = SortOrder.Descending;
-            } else {
+            }
+            else
+            {
                 listView1.Sorting = SortOrder.Ascending;
             }
 
 
         }
 
-        private void addressUtilityToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void addressUtilityToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             Program.ShowAddressUtility();
         }
 
 
-        private void listView1_ItemActivate(object sender, EventArgs e) {
-            if (listView1.SelectedItems.Count > 0) {
+        private void listView1_ItemActivate(object sender, EventArgs e)
+        {
+            if (listView1.SelectedItems.Count > 0)
+            {
                 ListViewItem item = listView1.SelectedItems[0];
                 item.Checked = true;
                 Program.ShowAddressUtility();
                 Program.AddressUtility.DisplayKeyCollectionItem((KeyCollectionItem)item.Tag);
             }
-            
+
         }
 
-        private void detailsToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void detailsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             listView1_ItemActivate(sender, e);
         }
 
 
-        private void clearAllToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void clearAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             DialogResult result = MessageBox.Show(
                 "Do you want to clear (delete) these keys?  This cannot be undone.",
                 "Clear keys?",
@@ -198,63 +236,81 @@ namespace BtcAddress.Forms {
 
         }
 
-        private void base58CalculatorToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void base58CalculatorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             Program.ShowBase58Calc();
         }
 
-        private void keyCombinerToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void keyCombinerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             Program.ShowKeyCombiner();
         }
 
-        private void mofNCalculatorToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void mofNCalculatorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             Program.ShowMofNcalc();
         }
 
-        private void intermediateGeneratorToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void intermediateGeneratorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             Program.ShowIntermediateGen();
         }
 
-        private void saveAddressListToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void saveAddressListToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             List<KeyCollectionItem> selected = new List<KeyCollectionItem>();
-            foreach (ListViewItem lvi in listView1.Items) {
+            foreach (ListViewItem lvi in listView1.Items)
+            {
                 if (lvi.Checked) selected.Add(lvi.Tag as KeyCollectionItem);
             }
-            if (selected.Count == 0) {
-                MessageBox.Show("No items are selected","Empty selection",
+            if (selected.Count == 0)
+            {
+                MessageBox.Show("No items are selected", "Empty selection",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            try {
+            try
+            {
                 saveFileDialog1.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
-                if (DialogResult.OK == saveFileDialog1.ShowDialog()) {
+                if (DialogResult.OK == saveFileDialog1.ShowDialog())
+                {
                     // If the file name is not an empty string open it for saving.
-                    if (saveFileDialog1.FileName != "") {
+                    if (saveFileDialog1.FileName != "")
+                    {
                         // Saves the Image via a FileStream created by the OpenFile method.
-                        using (StreamWriter w = File.CreateText(saveFileDialog1.FileName)) {
-                            foreach (var k in selected) {
+                        using (StreamWriter w = File.CreateText(saveFileDialog1.FileName))
+                        {
+                            foreach (var k in selected)
+                            {
                                 w.WriteLine(k.GetAddressBase58());
                             }
                             w.Close();
                         }
                     }
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show(ex.Message, "Failed to save file", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
             }
         }
 
-        private void enterAnAddressToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void enterAnAddressToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             var asa = new BtcAddress.Forms.AddSingleAddress();
             asa.ShowDialog();
-            if (asa.Result != null) {
-                if (asa.Result is EncryptedKeyPair) {
+            if (asa.Result != null)
+            {
+                if (asa.Result is EncryptedKeyPair)
+                {
                     this.KeyCollection.AddItem(new KeyCollectionItem(asa.Result as EncryptedKeyPair));
                 }
                 else if (asa.Result is List<Object>)
                 {
-                    List<Object>tmpList = (List<Object>)asa.Result;
-                    foreach (Object tmpObj in tmpList) {
+                    List<Object> tmpList = (List<Object>)asa.Result;
+                    foreach (Object tmpObj in tmpList)
+                    {
                         this.KeyCollection.AddItem(new KeyCollectionItem(tmpObj as AddressBase));
                         Application.DoEvents();
                     }
@@ -266,7 +322,8 @@ namespace BtcAddress.Forms {
             }
         }
 
-        private void deleteSelectedItemsToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void deleteSelectedItemsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
 
             DialogResult result = MessageBox.Show(
                 "Do you want to clear (delete) the selected keys?  This cannot be undone.",
@@ -277,10 +334,12 @@ namespace BtcAddress.Forms {
 
 
             List<KeyCollectionItem> itemsToDelete = new List<KeyCollectionItem>();
-            foreach (ListViewItem lvi in listView1.Items) {
+            foreach (ListViewItem lvi in listView1.Items)
+            {
                 if (lvi.Checked) itemsToDelete.Add((KeyCollectionItem)lvi.Tag);
             }
-            if (itemsToDelete.Count == 0) {
+            if (itemsToDelete.Count == 0)
+            {
                 MessageBox.Show("No items selected.",
                     "Nothing to delete",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -290,18 +349,22 @@ namespace BtcAddress.Forms {
             KeyCollection.DeleteItemRange(itemsToDelete);
         }
 
-        private void exitToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             this.Close();
         }
 
-        private void confirmationCodeValidatorToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void confirmationCodeValidatorToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             Program.ShowConfValidator();
         }
 
-        private void printPaperWalletsToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void printPaperWalletsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
         }
 
-        private void printTwoFactorCoinInsertsToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void printTwoFactorCoinInsertsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             List<KeyCollectionItem> itemsToPrint = getEncryptedItemsToPrint();
             if (itemsToPrint == null) return;
 
@@ -310,19 +373,24 @@ namespace BtcAddress.Forms {
             pd.PrinterSettings = ps;
             DialogResult dr = pd.ShowDialog();
 
-            if (dr == DialogResult.OK) {
+            if (dr == DialogResult.OK)
+            {
                 CoinInsert printer;
-                if (sender.Equals(printPhysicalBitcoinInsertsDenseToolStripMenuItem)) {
+                if (sender.Equals(printPhysicalBitcoinInsertsDenseToolStripMenuItem))
+                {
                     printer = new CoinInsertDense();
-                } else {
+                }
+                else
+                {
                     printer = new CoinInsert();
-                }                
-                
+                }
+
                 printer.keys = itemsToPrint;
                 printer.PrinterSettings = pd.PrinterSettings;
                 printer.DenseMode = true;
                 printer.Print();
-                foreach (ListViewItem lvi in listView1.Items) {
+                foreach (ListViewItem lvi in listView1.Items)
+                {
                     if (lvi.Checked) lvi.Checked = false;
                 }
             }
@@ -330,18 +398,22 @@ namespace BtcAddress.Forms {
 
         }
 
-        private void menuStrip1_MouseMove(object sender, MouseEventArgs e) {
+        private void menuStrip1_MouseMove(object sender, MouseEventArgs e)
+        {
             ExtraEntropy.AddExtraEntropy(DateTime.Now.Ticks.ToString() + e.X + "," + e.Y);
         }
 
-        private void menuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e) {
+        private void menuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
         }
 
-        private void keyDecrypterToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void keyDecrypterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             Program.ShowKeyDecrypter();
         }
 
-        private void escrowToolsToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void escrowToolsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             Program.ShowEscrowTools();
         }
 

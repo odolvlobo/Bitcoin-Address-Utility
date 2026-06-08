@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -26,16 +26,21 @@ using System.Text;
 using System.Windows.Forms;
 using Casascius.Bitcoin;
 
-namespace BtcAddress.Forms {
-    public partial class AddSingleAddress : Form {
-        public AddSingleAddress() {
+namespace BtcAddress.Forms
+{
+    public partial class AddSingleAddress : Form
+    {
+        public AddSingleAddress()
+        {
             InitializeComponent();
         }
 
         public object Result;
 
-        private void button1_Click(object sender, EventArgs e) {
-            if (textBox1.Text == "") {
+        private void button1_Click(object sender, EventArgs e)
+        {
+            if (textBox1.Text == "")
+            {
                 MessageBox.Show("Enter a key first.");
                 return;
             }
@@ -67,7 +72,8 @@ namespace BtcAddress.Forms {
             }
         }
 
-        private void btnGoMulti_Click(object sender, EventArgs e) {
+        private void btnGoMulti_Click(object sender, EventArgs e)
+        {
             textBox1.Focus();
             textBox1.Multiline = true;
             btnGoMulti.Visible = false;

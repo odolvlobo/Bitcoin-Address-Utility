@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -21,11 +21,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Casascius.Bitcoin {
+namespace Casascius.Bitcoin
+{
     /// <summary>
     /// Represents an encrypted KeyPair that can be decrypted with a passphrase.
     /// </summary>
-    public abstract class PassphraseKeyPair : EncryptedKeyPair {
+    public abstract class PassphraseKeyPair : EncryptedKeyPair
+    {
         protected PassphraseKeyPair() : base() { }
 
         /// <summary>
@@ -34,7 +36,8 @@ namespace Casascius.Bitcoin {
         /// Returns false if the passphrase did not decrypt the key (even if the key is
         /// already unencrypted and no passphrase was needed).
         /// </summary>
-        public virtual bool DecryptWithPassphrase(string passphrase) {
+        public virtual bool DecryptWithPassphrase(string passphrase)
+        {
             return false;
         }
     }

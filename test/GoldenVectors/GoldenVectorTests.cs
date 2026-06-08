@@ -20,7 +20,8 @@ using System.Collections.Generic;
 using Casascius.Bitcoin;
 using Xunit;
 
-namespace BtcAddress.GoldenVectors {
+namespace BtcAddress.GoldenVectors
+{
 
     // Crypto-validation harness for the .NET 10 migration (plan Step 7).
     //
@@ -32,7 +33,8 @@ namespace BtcAddress.GoldenVectors {
     // Any failure means a BouncyCastle v1->v2 migration regression. Originally a
     // standalone console harness; migrated to xUnit so `dotnet test` runs it alongside
     // the unit suite. Still a separate assembly, so it remains the dedicated release gate.
-    public class GoldenVectorTests {
+    public class GoldenVectorTests
+    {
 
         static string NoSpace(string s) => s == null ? null : s.Replace(" ", "");
 
@@ -41,7 +43,8 @@ namespace BtcAddress.GoldenVectors {
 
         // --- Known-answer: private key = 0x01, uncompressed -----------------
         [Fact]
-        public void Priv0x01_Uncompressed() {
+        public void Priv0x01_Uncompressed()
+        {
             var kp = new KeyPair(PrivOne(), compressed: false);
             Assert.Equal("1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm", kp.AddressBase58);
             Assert.Equal("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAnchuDf", kp.PrivateKeyBase58);
@@ -53,7 +56,8 @@ namespace BtcAddress.GoldenVectors {
 
         // --- Known-answer: private key = 0x01, compressed -------------------
         [Fact]
-        public void Priv0x01_Compressed() {
+        public void Priv0x01_Compressed()
+        {
             var kp = new KeyPair(PrivOne(), compressed: true);
             Assert.Equal("1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", kp.AddressBase58);
             Assert.Equal("KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn", kp.PrivateKeyBase58);
@@ -64,13 +68,15 @@ namespace BtcAddress.GoldenVectors {
 
         // --- Base58Check leading-zero handling ------------------------------
         [Fact]
-        public void Base58Check_AllZero_WellKnownAddress() {
+        public void Base58Check_AllZero_WellKnownAddress()
+        {
             // version 0x00 + 20 zero bytes -> well-known all-zero address.
             Assert.Equal("1111111111111111111114oLvT2", Util.ByteArrayToBase58Check(new byte[21]));
         }
 
         [Fact]
-        public void Base58Check_LeadingZeros_RoundTrip() {
+        public void Base58Check_LeadingZeros_RoundTrip()
+        {
             byte[] lead = new byte[] { 0x00, 0x00, 0x12, 0x34, 0x56, 0x78, 0x9a };
             byte[] dec = Util.Base58CheckToByteArray(Util.ByteArrayToBase58Check(lead));
             Assert.Equal(lead, dec);
@@ -78,7 +84,8 @@ namespace BtcAddress.GoldenVectors {
 
         // --- Casascius mini private key (known vector) ----------------------
         [Fact]
-        public void MiniKey_KnownVector_ToPrivHex() {
+        public void MiniKey_KnownVector_ToPrivHex()
+        {
             var mini = new MiniKeyPair("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy");
             Assert.Equal("4C7A9640C72DC2099F23715D0C8A0D8A35F8906E3CAB61DD3F78B67BF887C9AB",
                 NoSpace(Util.ByteArrayToString(mini.PrivateKeyBytes)));
@@ -88,7 +95,8 @@ namespace BtcAddress.GoldenVectors {
         // Encryption here is deterministic (passphrase + key only), so we match
         // the published encrypted key byte-for-byte.
         [Fact]
-        public void Bip38_NoEcMultiply_SpecVector_RoundTrip() {
+        public void Bip38_NoEcMultiply_SpecVector_RoundTrip()
+        {
             const string specWif = "5KN7MzqK5wt2TP1fQCYyHBtDrXdJuXbUzm4A9rKAteGu3Qi5CVR";
             const string specEnc = "6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg";
             KeyPair known = new KeyPair(specWif);
@@ -102,7 +110,8 @@ namespace BtcAddress.GoldenVectors {
 
         // --- BIP38 EC-multiply round-trip (encrypt/confirm/decrypt) ---------
         [Fact]
-        public void Bip38_EcMultiply_RoundTrip() {
+        public void Bip38_EcMultiply_RoundTrip()
+        {
             byte[] ownerentropy = new byte[8];
             new Org.BouncyCastle.Security.SecureRandom().NextBytes(ownerentropy);
             var intermediate = new Bip38Intermediate("Satoshi", ownerentropy, true);
@@ -117,7 +126,8 @@ namespace BtcAddress.GoldenVectors {
 
         // --- M-of-N split/combine self-consistency --------------------------
         [Fact]
-        public void MofN_2of3_AnySubset_RecombinesToSameAddress() {
+        public void MofN_2of3_AnySubset_RecombinesToSameAddress()
+        {
             var gen = new MofN();
             gen.Generate(2, 3); // 2-of-3, random key
             List<string> parts = gen.GetKeyParts();
@@ -134,18 +144,22 @@ namespace BtcAddress.GoldenVectors {
 
         // --- Escrow code round-trip -----------------------------------------
         [Fact]
-        public void Escrow_RoundTrip_RecoversPaymentAddress() {
+        public void Escrow_RoundTrip_RecoversPaymentAddress()
+        {
             var escrow = new EscrowCodeSet();
             var pay = new EscrowCodeSet(escrow.EscrowInvitationCodeA);
             string payAddr = pay.BitcoinAddress;
             Assert.False(string.IsNullOrEmpty(payAddr));
 
             string recovered = null;
-            foreach (string firstcode in new[] { escrow.EscrowInvitationCodeB, escrow.EscrowInvitationCodeA }) {
-                try {
+            foreach (string firstcode in new[] { escrow.EscrowInvitationCodeB, escrow.EscrowInvitationCodeA })
+            {
+                try
+                {
                     var rec = new EscrowCodeSet(firstcode, pay.PaymentInvitationCode);
                     if (rec.BitcoinAddress == payAddr) { recovered = rec.BitcoinAddress; break; }
-                } catch { /* try the other code ordering */ }
+                }
+                catch { /* try the other code ordering */ }
             }
             Assert.Equal(payAddr, recovered);
         }
@@ -158,20 +172,23 @@ namespace BtcAddress.GoldenVectors {
         [InlineData("1BitcoinEaterAddressDontSendf59kuE")]                                    // address (34)
         [InlineData("6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg")]            // BIP38 key (58)
         [InlineData("cfrm38V8a9b2c3d4e5f6g7h8j9k1m2n3p4q5r6s7t8u9v1w2x3y4z5A6B7C8D9E1F2")]     // confirmation-length
-        public void Qr_BoundaryLengthPayloads_Encode(string payload) {
+        public void Qr_BoundaryLengthPayloads_Encode(string payload)
+        {
             using var bmp = global::BtcAddress.QR.EncodeQRCode(payload);
             Assert.NotNull(bmp);
         }
 
         [Fact]
-        public void Qr_PubKeyHex_BothForms_Encode() {
+        public void Qr_PubKeyHex_BothForms_Encode()
+        {
             var kpU = new KeyPair(PrivOne(), compressed: false);
             var kpC = new KeyPair(PrivOne(), compressed: true);
             using (var u = global::BtcAddress.QR.EncodeQRCode(NoSpace(kpU.PublicKeyHex))) Assert.NotNull(u);
             using (var c = global::BtcAddress.QR.EncodeQRCode(NoSpace(kpC.PublicKeyHex))) Assert.NotNull(c);
         }
 
-        static string CombineMofN(string p1, string p2) {
+        static string CombineMofN(string p1, string p2)
+        {
             var m = new MofN();
             m.AddKeyPart(p1);
             m.AddKeyPart(p2);

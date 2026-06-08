@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -23,8 +23,10 @@ using System.Text;
 using System.Xml;
 using System.Xml.Serialization;
 
-namespace Casascius.Bitcoin {
-    public class KeyCollection {
+namespace Casascius.Bitcoin
+{
+    public class KeyCollection
+    {
 
         public List<KeyCollectionItem> Items = new List<KeyCollectionItem>();
 
@@ -33,25 +35,30 @@ namespace Casascius.Bitcoin {
         public event Action<IEnumerable<KeyCollectionItem>> ItemsDeleted;
 
 
-        public void AddItem(KeyCollectionItem item) {
+        public void AddItem(KeyCollectionItem item)
+        {
             Items.Add(item);
             if (ItemAdded != null) ItemAdded.Invoke(item);
         }
 
-        public void AddItemRange(IEnumerable<KeyCollectionItem> items) {
-            foreach (var item in items) {
+        public void AddItemRange(IEnumerable<KeyCollectionItem> items)
+        {
+            foreach (var item in items)
+            {
                 Items.Add(item);
             }
             if (ItemsAdded != null) ItemsAdded.Invoke(items);
         }
 
-        public void DeleteItemRange(IEnumerable<KeyCollectionItem> items) {
-            foreach (var item in items) {
+        public void DeleteItemRange(IEnumerable<KeyCollectionItem> items)
+        {
+            foreach (var item in items)
+            {
                 Items.Remove(item);
             }
             if (ItemsDeleted != null) ItemsDeleted.Invoke(items);
         }
-        
+
 
 
     }

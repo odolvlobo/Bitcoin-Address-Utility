@@ -18,34 +18,40 @@
 using Casascius.Bitcoin;
 using Xunit;
 
-namespace BtcAddress.UnitTests {
+namespace BtcAddress.UnitTests
+{
 
     // StringInterpreter routes arbitrary user text to the right model type.
     // Guards the UI text-field -> model glue against type-detection regressions.
-    public class StringInterpreterTests {
+    public class StringInterpreterTests
+    {
 
         [Fact]
-        public void Interpret_Wif_ReturnsKeyPair() {
+        public void Interpret_Wif_ReturnsKeyPair()
+        {
             var result = StringInterpreter.Interpret("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAnchuDf");
             var kp = Assert.IsAssignableFrom<KeyPair>(result);
             Assert.Equal("1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm", kp.AddressBase58);
         }
 
         [Fact]
-        public void Interpret_Address_ReturnsAddressBase() {
+        public void Interpret_Address_ReturnsAddressBase()
+        {
             var result = StringInterpreter.Interpret("1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm");
             var addr = Assert.IsAssignableFrom<AddressBase>(result);
             Assert.Equal("1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm", addr.AddressBase58);
         }
 
         [Fact]
-        public void Interpret_MiniKey_ReturnsMiniKeyPair() {
+        public void Interpret_MiniKey_ReturnsMiniKeyPair()
+        {
             var result = StringInterpreter.Interpret("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy");
             Assert.IsAssignableFrom<MiniKeyPair>(result);
         }
 
         [Fact]
-        public void Interpret_Bip38Key_ReturnsBip38KeyPair() {
+        public void Interpret_Bip38Key_ReturnsBip38KeyPair()
+        {
             var result = StringInterpreter.Interpret("6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg");
             Assert.IsAssignableFrom<Bip38KeyPair>(result);
         }
@@ -54,12 +60,14 @@ namespace BtcAddress.UnitTests {
         [InlineData("")]
         [InlineData("not a key")]
         [InlineData("1234")]
-        public void Interpret_Garbage_ReturnsNull(string input) {
+        public void Interpret_Garbage_ReturnsNull(string input)
+        {
             Assert.Null(StringInterpreter.Interpret(input));
         }
 
         [Fact]
-        public void Interpret_Null_ReturnsNull() {
+        public void Interpret_Null_ReturnsNull()
+        {
             Assert.Null(StringInterpreter.Interpret(null));
         }
     }

@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -22,30 +22,33 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
-
-using System.Security.Cryptography;
+using Casascius.Bitcoin;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Math;
 using Org.BouncyCastle.Math.EC;
-using Casascius.Bitcoin;
+using Org.BouncyCastle.Security;
 
-namespace BtcAddress.Forms {
-    public partial class EscrowTools : Form {
-        public EscrowTools() {
+namespace BtcAddress.Forms
+{
+    public partial class EscrowTools : Form
+    {
+        public EscrowTools()
+        {
             InitializeComponent();
         }
 
-        private void EscrowTools_Load(object sender, EventArgs e) {
+        private void EscrowTools_Load(object sender, EventArgs e)
+        {
             string crlf = "\r\n";
 
-            richTextBox1.Rtf = 
+            richTextBox1.Rtf =
 @"{\rtf1\ansi\ansicpg1252\deff0\deflang1033{\fonttbl{\f0\fnil\fcharset0 Calibri;}}" + crlf +
 @"{\*\generator Msftedit 5.41.21.2510;}\viewkind4\uc1\pard\sa200\sl276\slmult1\lang9\b\f0\fs28 How Three-Party Escrow Works\fs22\par" + crlf +
 @"Escrow\b0  allows two people to transact in Bitcoin while leaving their funds visible to everybody and accessible to nobody until somebody releases them.  It allows the payer or the payee to release funds to one another, and also lets a third person decide for them if the two can't agree.  The third person never has access to take the funds, and is only needed to release the funds if the original two can't agree who gets them.  Whoever gets a copy of all three ""invitations"" gets access to the funds.\par" + crlf +
@@ -57,11 +60,12 @@ namespace BtcAddress.Forms {
 @"\b Bob\b0  can give a refund to Alice by giving her a copy of his Escrow Invitation code.\par" + crlf +
 @"\b Eddie\b0  can also force the payment to be awarded to Alice or Bob by giving them both Escrow Invitation codes.  Eddie can't claim the payment himself because he would also need the Payment Invitation, which he doesn't have.\par" + crlf +
 @"}";
- 
+
 
         }
 
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
             MessageBox.Show(
 "BECAUSE THIS SOFTWARE IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY FOR THE SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW. EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES PROVIDE THE SOFTWARE \"AS IS\" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH YOU. SHOULD THE SOFTWARE PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING, REPAIR, OR CORRECTION.\r\n\r\n" +
 "IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR REDISTRIBUTE THE SOFTWARE AS PERMITTED BY THE ABOVE LICENCE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING OUT OF THE USE OR INABILITY TO USE THE SOFTWARE (INCLUDING BUT NOT LIMITED TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY YOU OR THIRD PARTIES OR A FAILURE OF THE SOFTWARE TO OPERATE WITH ANY OTHER SOFTWARE), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.",
@@ -74,7 +78,8 @@ namespace BtcAddress.Forms {
 
         }
 
-        private void btnGenerateEscrowInvitation_Click(object sender, EventArgs e) {
+        private void btnGenerateEscrowInvitation_Click(object sender, EventArgs e)
+        {
 
             EscrowCodeSet cs = new EscrowCodeSet();
 
@@ -82,15 +87,19 @@ namespace BtcAddress.Forms {
             txtEscrowForPayee.Text = cs.EscrowInvitationCodeB;
         }
 
-        private void btnGenPayee_Click(object sender, EventArgs e) {
+        private void btnGenPayee_Click(object sender, EventArgs e)
+        {
 
 
-            try {
+            try
+            {
                 txtPayeeCode.Text = Util.Base58Trim(txtPayeeCode.Text);
                 EscrowCodeSet cs = new EscrowCodeSet(txtPayeeCode.Text);
                 txtPayeeGeneratedInvite.Text = cs.PaymentInvitationCode;
                 txtPayeeGeneratedAddress.Text = cs.BitcoinAddress;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
 
@@ -98,7 +107,8 @@ namespace BtcAddress.Forms {
 
         }
 
-        private void setPayerElementsVisible(bool visible) {
+        private void setPayerElementsVisible(bool visible)
+        {
             lblPayerHereIs.Visible = visible;
             txtPayerAddress.Visible = visible;
             btnPayerSave.Visible = visible;
@@ -108,28 +118,34 @@ namespace BtcAddress.Forms {
         }
 
 
-        private void btnPayerDone_Click(object sender, EventArgs e) {
-            if (btnPayerDone.Text == "Reset") {
+        private void btnPayerDone_Click(object sender, EventArgs e)
+        {
+            if (btnPayerDone.Text == "Reset")
+            {
                 setPayerElementsVisible(false);
                 btnPayerDone.Text = "Done";
                 return;
             }
 
 
-            try {
+            try
+            {
                 txtPayerCode1.Text = Util.Base58Trim(txtPayerCode1.Text);
                 txtPayerCode2.Text = Util.Base58Trim(txtPayerCode2.Text);
                 EscrowCodeSet cs = new EscrowCodeSet(txtPayerCode1.Text, txtPayerCode2.Text);
                 txtPayerAddress.Text = cs.BitcoinAddress;
                 setPayerElementsVisible(true);
                 btnPayerDone.Text = "Reset";
-                if (cs.SamePartyWarningApplies) {
+                if (cs.SamePartyWarningApplies)
+                {
                     MessageBox.Show("The Payment Invitation Code appears to have been generated from the same Escrow Invitation Code you entered, " +
                         "and not its mate.  You might be verifying a Payment Invitation you produced yourself, rather than one " +
                         "produced by your trading partner.", "Are you verifying the wrong thing?", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
 
@@ -140,8 +156,10 @@ namespace BtcAddress.Forms {
 
         }
 
-        private void btnRedeem_Click(object sender, EventArgs e) {
-            try {
+        private void btnRedeem_Click(object sender, EventArgs e)
+        {
+            try
+            {
                 txtRedeemCode1.Text = Util.Base58Trim(txtRedeemCode1.Text);
                 txtRedeemCode2.Text = Util.Base58Trim(txtRedeemCode2.Text);
                 txtRedeemCode3.Text = Util.Base58Trim(txtRedeemCode3.Text);
@@ -149,7 +167,9 @@ namespace BtcAddress.Forms {
                 EscrowCodeSet cs = new EscrowCodeSet(txtRedeemCode1.Text, txtRedeemCode2.Text, txtRedeemCode3.Text);
                 txtRedeemAddress.Text = cs.BitcoinAddress;
                 txtRedeemPrivKey.Text = cs.PrivateKey;
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
 

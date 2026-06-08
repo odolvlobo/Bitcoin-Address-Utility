@@ -1,4 +1,4 @@
-﻿#region License
+#region License
 /*
 Illusory Studios C# Crypto Library (CryptSharp)
 Copyright (c) 2011 James F. Bellinger <jfb@zer7.com>
@@ -20,17 +20,21 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 using System;
 using System.Security.Cryptography;
 
-namespace CryptSharp.Utility {
-    public static class Salsa20Core {
+namespace CryptSharp.Utility
+{
+    public static class Salsa20Core
+    {
         // Source: http://cr.yp.to/salsa20.html
         static uint R(uint a, int b) { return (a << b) | (a >> (32 - b)); }
 
         public static void Compute(int rounds,
             uint[] input, int inputOffset, uint[] output, int outputOffset,
-            uint[] x) {
+            uint[] x)
+        {
             if (rounds < 1 || rounds > 20 || (rounds & 1) == 1) { throw new ArgumentOutOfRangeException("rounds"); }
 
-            try {
+            try
+            {
                 int i;
                 uint x0 = input[0 + inputOffset];
                 uint x1 = input[1 + inputOffset];
@@ -49,7 +53,8 @@ namespace CryptSharp.Utility {
                 uint x14 = input[14 + inputOffset];
                 uint x15 = input[15 + inputOffset];
 
-                for (i = rounds; i > 0; i -= 2) {
+                for (i = rounds; i > 0; i -= 2)
+                {
                     //x4 ^= R(x0 + x12, 7); x8 ^= R(x4 + x0, 9);
                     x4 ^= (x0 + x12 << 7) | (x0 + x12 >> (32 - 7));
                     x8 ^= (x4 + x0 << 9) | (x4 + x0 >> (32 - 9));
@@ -132,7 +137,9 @@ namespace CryptSharp.Utility {
                 output[14 + outputOffset] = x14 + input[14 + inputOffset];
                 output[15 + outputOffset] = x15 + input[15 + inputOffset];
 
-            } catch {
+            }
+            catch
+            {
                 Helper.CheckNull("input", input); Helper.CheckBounds("input", input, inputOffset, 16);
                 Helper.CheckNull("output", output); Helper.CheckBounds("output", output, outputOffset, 16);
                 Helper.CheckNull("x", x); Helper.CheckBounds("x", x, 0, 16);
