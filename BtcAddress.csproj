@@ -30,4 +30,10 @@
     <EmbeddedResource Remove="test\**" />
     <None Remove="test\**" />
   </ItemGroup>
+  <!-- Runtime assets loaded by relative path at print time (QRPrint.cs):
+       voucher artwork + Ubuntu font. Must sit next to the exe, including in
+       single-file publish output. -->
+  <ItemGroup>
+    <None Include="note-*.png;Ubuntu-R.ttf" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

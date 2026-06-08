@@ -78,8 +78,9 @@ Export and host the public key (your website, the repo, a GitHub release), and/o
 push it to a keyserver:
 
 ```powershell
-# Export to a file to host alongside releases
-& $gpg --armor --export 6B6BC26599EC24EF7E29A405EAF050539D0B2925 > odolvlobo.asc
+# Export to a file to host alongside releases.
+# Use gpg's --output, NOT PowerShell '>' (which writes UTF-16 and corrupts the armor).
+& $gpg --armor --output odolvlobo.asc --export 6B6BC26599EC24EF7E29A405EAF050539D0B2925
 
 # Optional: publish to a keyserver
 & $gpg --keyserver hkps://keys.openpgp.org `
