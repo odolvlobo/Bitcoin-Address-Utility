@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -109,16 +110,14 @@ namespace BtcAddress {
                 ECPoint point = pub.GetECPoint();
                 
                 ECPoint combined = rdoAdd.Checked ? point.Add(priv.GetECPoint()) : point.Multiply(new BigInteger(1, priv.PrivateKeyBytes));
-                ECPoint combinedc = ps.Curve.CreatePoint(combined.X.ToBigInteger(), combined.Y.ToBigInteger(), priv.IsCompressedPoint);
-                PublicKey pkcombined = new PublicKey(combinedc.GetEncoded());
+                PublicKey pkcombined = new PublicKey(combined.GetEncoded(priv.IsCompressedPoint));
                 txtOutputAddress.Text = pkcombined.AddressBase58;
                 txtOutputPubkey.Text = pkcombined.PublicKeyHex.Replace(" ", "");
                 txtOutputPriv.Text = "Only available when combining two private keys";
             } else {
                 // Adding two public keys
                 ECPoint combined = pub1.GetECPoint().Add(pub2.GetECPoint());
-                ECPoint combinedc = ps.Curve.CreatePoint(combined.X.ToBigInteger(), combined.Y.ToBigInteger(), pub1.IsCompressedPoint);
-                PublicKey pkcombined = new PublicKey(combinedc.GetEncoded());
+                PublicKey pkcombined = new PublicKey(combined.GetEncoded(pub1.IsCompressedPoint));
                 txtOutputAddress.Text = pkcombined.AddressBase58;
                 txtOutputPubkey.Text = pkcombined.PublicKeyHex.Replace(" ", "");
                 txtOutputPriv.Text = "Only available when combining two private keys";

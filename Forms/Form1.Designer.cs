@@ -1,4 +1,21 @@
-﻿namespace BtcAddress {
+﻿// Bitcoin Address Utility
+// Copyright (C) 2012 Mike Caldwell
+// Copyright (C) 2026 odolvlobo
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+namespace BtcAddress {
     partial class Form1 {
         /// <summary>
         /// Required designer variable.
@@ -42,7 +59,6 @@
             this.btnPrivWIFToHex = new System.Windows.Forms.Button();
             this.btnPrivHexToWIF = new System.Windows.Forms.Button();
             this.btnGenerate = new System.Windows.Forms.Button();
-            this.btnBlockExplorer = new System.Windows.Forms.Button();
             this.cboCoinType = new System.Windows.Forms.ComboBox();
             this.btnShacode = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -232,17 +248,7 @@
             this.btnGenerate.Text = "Generate Address";
             this.btnGenerate.UseVisualStyleBackColor = true;
             this.btnGenerate.Click += new System.EventHandler(this.btnGenerate_Click);
-            // 
-            // btnBlockExplorer
-            // 
-            this.btnBlockExplorer.Location = new System.Drawing.Point(543, 316);
-            this.btnBlockExplorer.Name = "btnBlockExplorer";
-            this.btnBlockExplorer.Size = new System.Drawing.Size(114, 29);
-            this.btnBlockExplorer.TabIndex = 23;
-            this.btnBlockExplorer.Text = "Block Explorer";
-            this.btnBlockExplorer.UseVisualStyleBackColor = true;
-            this.btnBlockExplorer.Click += new System.EventHandler(this.btnBlockExplorer_Click);
-            // 
+            //
             // cboCoinType
             // 
             this.cboCoinType.FormattingEnabled = true;
@@ -501,7 +507,6 @@
             this.Controls.Add(this.txtMinikey);
             this.Controls.Add(this.btnShacode);
             this.Controls.Add(this.cboCoinType);
-            this.Controls.Add(this.btnBlockExplorer);
             this.Controls.Add(this.btnGenerate);
             this.Controls.Add(this.btnPrivWIFToHex);
             this.Controls.Add(this.btnPrivHexToWIF);
@@ -552,7 +557,6 @@
         private System.Windows.Forms.Button btnPrivWIFToHex;
         private System.Windows.Forms.Button btnPrivHexToWIF;
         private System.Windows.Forms.Button btnGenerate;
-        private System.Windows.Forms.Button btnBlockExplorer;
         private System.Windows.Forms.ComboBox cboCoinType;
         private System.Windows.Forms.Button btnShacode;
         private System.Windows.Forms.MenuStrip menuStrip1;

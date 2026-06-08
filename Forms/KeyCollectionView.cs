@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -331,6 +332,9 @@ namespace BtcAddress.Forms {
 
         private void menuStrip1_MouseMove(object sender, MouseEventArgs e) {
             ExtraEntropy.AddExtraEntropy(DateTime.Now.Ticks.ToString() + e.X + "," + e.Y);
+        }
+
+        private void menuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e) {
         }
 
         private void keyDecrypterToolStripMenuItem_Click(object sender, EventArgs e) {

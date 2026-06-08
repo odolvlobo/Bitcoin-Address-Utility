@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -328,7 +329,9 @@ namespace Casascius.Bitcoin {
             PublicKey pk = new PublicKey(intermediate.passpoint);
 
             ECPoint generatedpoint = pk.GetECPoint().Multiply(new BigInteger(1, factorb));
-            byte[] generatedpointbytes = generatedpoint.GetEncoded();
+            // BouncyCastle 2.x: encode explicitly. This path produces an uncompressed
+            // key (matching 1.x, where a Multiply() result encoded uncompressed).
+            byte[] generatedpointbytes = generatedpoint.GetEncoded(false);
             PublicKey generatedaddress = new PublicKey(generatedpointbytes);
 
             // get addresshash

@@ -1,4 +1,21 @@
-﻿using System;
+﻿// Bitcoin Address Utility
+// Copyright (C) 2012 Mike Caldwell
+// Copyright (C) 2026 odolvlobo
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -145,16 +162,14 @@ namespace Casascius.Bitcoin {
             try {
                 point = ps.Curve.DecodePoint(unencryptedpubkey);
 
-                // multiply passfactor.  Result is going to be compressed.
+                // multiply passfactor.
                 ECPoint pubpoint = point.Multiply(new BigInteger(1, intermediate.passfactor));
 
-                // Do we want it uncompressed?  then we will have to uncompress it.
-                if (IsCompressedPoint==false) {
-                    pubpoint = ps.Curve.CreatePoint(pubpoint.X.ToBigInteger(), pubpoint.Y.ToBigInteger(), false);
-                }
+                // BouncyCastle 2.x: choose compression at encode time.
+                byte[] pubpointbytes = pubpoint.GetEncoded(IsCompressedPoint);
 
                 // Convert to bitcoin address and check address hash.
-                PublicKey generatedaddress = new PublicKey(pubpoint);
+                PublicKey generatedaddress = new PublicKey(pubpointbytes);
 
                 // get addresshash
                 UTF8Encoding utf8 = new UTF8Encoding(false);

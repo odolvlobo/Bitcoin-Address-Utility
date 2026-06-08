@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -294,10 +295,13 @@ namespace Casascius.Bitcoin {
 
 
         public static byte[] PubKeyToByteArray(ECPoint point) {
+            // BouncyCastle 2.x: Multiply() yields a non-normalized point; affine
+            // coordinates are only valid after Normalize(). (.X/.Y were removed.)
+            point = point.Normalize();
             byte[] pubaddr = new byte[65];
-            byte[] Y = point.Y.ToBigInteger().ToByteArray();
+            byte[] Y = point.AffineYCoord.ToBigInteger().ToByteArray();
             Array.Copy(Y, 0, pubaddr, 64 - Y.Length + 1, Y.Length);
-            byte[] X = point.X.ToBigInteger().ToByteArray();
+            byte[] X = point.AffineXCoord.ToBigInteger().ToByteArray();
             Array.Copy(X, 0, pubaddr, 32 - X.Length + 1, X.Length);
             pubaddr[0] = 4;
             return pubaddr;
@@ -313,8 +317,11 @@ namespace Casascius.Bitcoin {
 
             byte[] shaofpubkey = ComputeSha256(PubHex);
 
-            RIPEMD160 rip = System.Security.Cryptography.RIPEMD160.Create();
-            byte[] ripofpubkey = rip.ComputeHash(shaofpubkey);
+            // .NET 8+ removed System.Security.Cryptography.RIPEMD160; use BouncyCastle.
+            RipeMD160Digest rip = new RipeMD160Digest();
+            rip.BlockUpdate(shaofpubkey, 0, shaofpubkey.Length);
+            byte[] ripofpubkey = new byte[rip.GetDigestSize()];
+            rip.DoFinal(ripofpubkey, 0);
 
             return ByteArrayToString(ripofpubkey);
 

@@ -71,4 +71,4 @@ Bip38Base
 
 ## Planned upgrade
 
-`upgrade-to-dotnet-8-plan.md` is an agent-executable plan to retarget this to .NET 8 (keeping WinForms), swapping the two unmanaged DLLs for NuGet (`BouncyCastle.Cryptography`, `QRCoder`) and `System.Drawing.Common`. Its release gate is **byte-identical crypto output vs the original 4.0 binary** — preserve that invariant in any migration work. This work happens on branch `feature/upgrade-to-dotnet-8`.
+`upgrade-to-dotnet-10-plan.md` is an agent-executable plan to retarget this to .NET 10 (keeping WinForms), swapping the two unmanaged DLLs for NuGet (`BouncyCastle.Cryptography`, `QRCoder`) and `System.Drawing.Common`. Its release gate is **byte-identical crypto output vs the original 4.0 binary** — preserve that invariant in any migration work. This work happens on branch `feature/upgrade-to-dotnet-10`.

@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -206,23 +207,13 @@ namespace Casascius.Bitcoin {
         protected override byte[] ComputePublicKey() {
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             ECPoint point = ps.G;
-            
+
             Org.BouncyCastle.Math.BigInteger Db = new Org.BouncyCastle.Math.BigInteger(1, _privKey);
             ECPoint dd = point.Multiply(Db);
 
-
-            if (IsCompressedPoint) {
-                dd = ps.Curve.CreatePoint(dd.X.ToBigInteger(), dd.Y.ToBigInteger(), true);                
-                return dd.GetEncoded();
-            } else {
-                byte[] pubaddr = new byte[65];
-                byte[] Y = dd.Y.ToBigInteger().ToByteArray();
-                Array.Copy(Y, 0, pubaddr, 64 - Y.Length + 1, Y.Length);
-                byte[] X = dd.X.ToBigInteger().ToByteArray();
-                Array.Copy(X, 0, pubaddr, 32 - X.Length + 1, X.Length);
-                pubaddr[0] = 4;
-                return pubaddr;
-            }
+            // BouncyCastle 2.x: GetEncoded(false) emits 0x04||X||Y (the 65-byte form
+            // the original built by hand); GetEncoded(true) emits the 33-byte form.
+            return dd.GetEncoded(IsCompressedPoint);
         }
 
         /// <summary>

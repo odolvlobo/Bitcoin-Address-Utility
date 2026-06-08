@@ -1,10 +1,10 @@
-# AGENT PLAN: .NET 4.0 → .NET 8, keep WinForms
+# AGENT PLAN: .NET 4.0 → .NET 10, keep WinForms
 
 Audience: executing agent. Deterministic steps. Run gates in order. Do not skip Step 0 or Step 7.
 
 ## Objective
 
-Retarget `BtcAddress.csproj` to `net8.0-windows`, keep WinForms, swap dead DLL refs for NuGet, emit single-file self-contained x64 `.exe` that runs offline. Release gate = crypto output byte-identical to original 4.0 binary.
+Retarget `BtcAddress.csproj` to `net10.0-windows`, keep WinForms, swap dead DLL refs for NuGet, emit single-file self-contained x64 `.exe` that runs offline. Release gate = crypto output byte-identical to original 4.0 binary.
 
 ## Constraints
 
@@ -38,7 +38,7 @@ Retarget `BtcAddress.csproj` to `net8.0-windows`, keep WinForms, swap dead DLL r
 
 ## STEP 0 — Baseline (MANDATORY, before any edit)
 
-1. Branch `feature/upgrade-to-dotnet-8` (already created; this plan committed there).
+1. Branch `feature/upgrade-to-dotnet-10` (already created; this plan committed there).
 2. Build or locate original 4.0 binary = golden reference.
 3. Capture golden vectors from original binary → write `test/golden-vectors.md`. Required inputs (fixed seeds):
    - priv key `0x01` → address + WIF, compressed AND uncompressed.
@@ -59,7 +59,7 @@ Overwrite `BtcAddress.csproj`:
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <RootNamespace>BtcAddress</RootNamespace>
     <AssemblyName>BtcAddress</AssemblyName>
@@ -149,7 +149,7 @@ GATE 8: produced `.exe` runs on clean Windows (no .NET runtime) with no network.
 
 ## Done criteria
 
-- net8.0-windows SDK project, Debug+Release clean.
+- net10.0-windows SDK project, Debug+Release clean.
 - Old DLL refs gone, NuGet in place.
 - `app.config`/`Settings.*` deleted, attribution fixed.
 - All Step 7 vectors byte-match original.

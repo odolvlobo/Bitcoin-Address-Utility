@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -33,7 +34,6 @@ using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Math.EC;
-using ThoughtWorks.QRCode.Codec;
 
 using System.IO;
 using System.Drawing.Printing;
@@ -321,20 +321,6 @@ namespace BtcAddress {
 
         }
 
-        private void btnBlockExplorer_Click(object sender, EventArgs e) {
-            try {
-                if (cboCoinType.Text == "Testnet") {
-                    Process.Start("http://www.blockexplorer.com/testnet/address/" + txtBtcAddr.Text);
-                } else if (cboCoinType.Text == "Namecoin") {
-                    Process.Start("http://explorer.dot-bit.org/a/" + txtBtcAddr.Text);
-                } else if (cboCoinType.Text == "Litecoin") {
-                    Process.Start("http://explorer.litecoin.net/address/" + txtBtcAddr.Text);
-                } else {
-                    Process.Start("http://www.blockchain.info/address/" + txtBtcAddr.Text);
-                }
-            } catch { }
-            
-        }
 
         private void CorrectBitcoinAddress() {
             ChangeFlag++;

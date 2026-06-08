@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -162,17 +163,17 @@ namespace BtcAddress.Forms {
             try {
                 point = ps.Curve.DecodePoint(unencryptedpubkey);
 
-                // multiply passfactor.  Result is going to be compressed.
+                // multiply passfactor.
                 ECPoint pubpoint = point.Multiply(new BigInteger(1, intermediate.passfactor));
 
-                // Do we want it uncompressed?  then we will have to uncompress it.
+                // BouncyCastle 2.x: choose compression at encode time. The 0x20 flag
+                // bit indicates a compressed key.
                 byte flagbyte = confbytes[5];
-                if ((flagbyte & 0x20) == 0x00) {
-                    pubpoint = ps.Curve.CreatePoint(pubpoint.X.ToBigInteger(), pubpoint.Y.ToBigInteger(), false);
-                }
+                bool wantCompressed = (flagbyte & 0x20) != 0x00;
+                byte[] pubpointbytes = pubpoint.GetEncoded(wantCompressed);
 
                 // Convert to bitcoin address and check address hash.
-                PublicKey generatedaddress = new PublicKey(pubpoint);
+                PublicKey generatedaddress = new PublicKey(pubpointbytes);
 
                 // get addresshash
                 UTF8Encoding utf8 = new UTF8Encoding(false);
