@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -22,37 +22,45 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
-using System.Security.Cryptography;
+using Casascius.Bitcoin;
+using CryptSharp.Utility;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Math.EC;
-using CryptSharp.Utility;
 using Org.BouncyCastle.Math;
-using Casascius.Bitcoin;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
 
-namespace BtcAddress {
-    public partial class PpecKeygen : Form {
-        public PpecKeygen() {
+namespace BtcAddress
+{
+    public partial class PpecKeygen : Form
+    {
+        public PpecKeygen()
+        {
             InitializeComponent();
         }
 
-        private void btnEncode_Click(object sender, EventArgs e) {
-            if ((txtPassphrase.Text ?? "") == "") {
+        private void btnEncode_Click(object sender, EventArgs e)
+        {
+            if ((txtPassphrase.Text ?? "") == "")
+            {
                 MessageBox.Show("Enter a passphrase first.");
                 return;
             }
 
-            try {
+            try
+            {
                 Bip38Intermediate intermediate = new Bip38Intermediate(txtPassphrase.Text, Bip38Intermediate.Interpretation.Passphrase);
                 txtPassphraseCode.Text = intermediate.Code;
-            } catch (Exception ae) {
+            }
+            catch (Exception ae)
+            {
                 MessageBox.Show(ae.Message);
             }
         }

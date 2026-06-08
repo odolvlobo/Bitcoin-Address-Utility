@@ -19,14 +19,17 @@ using System.Collections.Generic;
 using Casascius.Bitcoin;
 using Xunit;
 
-namespace BtcAddress.UnitTests {
+namespace BtcAddress.UnitTests
+{
 
     // M-of-N split-key and escrow-code self-consistency. No public KAT exists for
     // these Casascius-custom paths, so the invariant is: any valid subset of parts
     // recombines to the same address.
-    public class SplitKeyTests {
+    public class SplitKeyTests
+    {
 
-        static string Combine(string p1, string p2) {
+        static string Combine(string p1, string p2)
+        {
             var m = new MofN();
             m.AddKeyPart(p1);
             m.AddKeyPart(p2);
@@ -35,7 +38,8 @@ namespace BtcAddress.UnitTests {
         }
 
         [Fact]
-        public void MofN_2of3_AnySubset_RecombinesToSameAddress() {
+        public void MofN_2of3_AnySubset_RecombinesToSameAddress()
+        {
             var gen = new MofN();
             gen.Generate(2, 3);
             List<string> parts = gen.GetKeyParts();
@@ -52,18 +56,22 @@ namespace BtcAddress.UnitTests {
         }
 
         [Fact]
-        public void Escrow_RoundTrip_RecoversPaymentAddress() {
+        public void Escrow_RoundTrip_RecoversPaymentAddress()
+        {
             var escrow = new EscrowCodeSet();
             var pay = new EscrowCodeSet(escrow.EscrowInvitationCodeA);
             string payAddr = pay.BitcoinAddress;
             Assert.False(string.IsNullOrEmpty(payAddr));
 
             string recovered = null;
-            foreach (string firstcode in new[] { escrow.EscrowInvitationCodeB, escrow.EscrowInvitationCodeA }) {
-                try {
+            foreach (string firstcode in new[] { escrow.EscrowInvitationCodeB, escrow.EscrowInvitationCodeA })
+            {
+                try
+                {
                     var rec = new EscrowCodeSet(firstcode, pay.PaymentInvitationCode);
                     if (rec.BitcoinAddress == payAddr) { recovered = rec.BitcoinAddress; break; }
-                } catch { /* try the other code ordering */ }
+                }
+                catch { /* try the other code ordering */ }
             }
             Assert.Equal(payAddr, recovered);
         }

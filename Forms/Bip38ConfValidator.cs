@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -22,50 +22,58 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
-using System.Security.Cryptography;
+using Casascius.Bitcoin;
+using CryptSharp.Utility;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Math;
-using CryptSharp.Utility;
-using Casascius.Bitcoin;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace BtcAddress.Forms {
-    public partial class Bip38ConfValidator : Form {
-        public Bip38ConfValidator() {
+namespace BtcAddress.Forms
+{
+    public partial class Bip38ConfValidator : Form
+    {
+        public Bip38ConfValidator()
+        {
             InitializeComponent();
         }
 
-        private void btnConfirm_Click(object sender, EventArgs e) {
+        private void btnConfirm_Click(object sender, EventArgs e)
+        {
             lblAddressHeader.Visible = false;
             lblAddressItself.Visible = false;
             lblResult.Visible = false;
-            
+
 
             // check for null entry
-            if (txtPassphrase.Text == "") {
+            if (txtPassphrase.Text == "")
+            {
                 MessageBox.Show("Passphrase is required.", "Passphrase required", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
 
-            if (txtConfCode.Text == "") {
+            if (txtConfCode.Text == "")
+            {
                 MessageBox.Show("Confirmation code is required.", "Confirmation code required", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
             }
 
             // Parse confirmation code.
             byte[] confbytes = Util.Base58CheckToByteArray(txtConfCode.Text.Trim());
-            if (confbytes == null) {
+            if (confbytes == null)
+            {
                 // is it even close?
-                if (txtConfCode.Text.StartsWith("cfrm38")) {
+                if (txtConfCode.Text.StartsWith("cfrm38"))
+                {
                     MessageBox.Show("This is not a valid confirmation code.  It has the right prefix, but " +
-                        "doesn't contain valid confirmation data.  Possible typo or incomplete?", 
+                        "doesn't contain valid confirmation data.  Possible typo or incomplete?",
                         "Invalid confirmation code", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
@@ -75,23 +83,29 @@ namespace BtcAddress.Forms {
             }
 
             if (confbytes.Length != 51 || confbytes[0] != 0x64 || confbytes[1] != 0x3B || confbytes[2] != 0xF6 ||
-                confbytes[3] != 0xA8 || confbytes[4] != 0x9A || confbytes[18] < 0x02 || confbytes[18] > 0x03) {
+                confbytes[3] != 0xA8 || confbytes[4] != 0x9A || confbytes[18] < 0x02 || confbytes[18] > 0x03)
+            {
 
                 // Unrecognized Base58 object.  Do we know what this is?  Tell the user.
                 object result = StringInterpreter.Interpret(txtConfCode.Text.Trim());
-                if (result != null) {
+                if (result != null)
+                {
 
                     // did we actually get an encrypted private key?  if so, just try to decrypt it.
-                    if (result is PassphraseKeyPair) {
+                    if (result is PassphraseKeyPair)
+                    {
                         PassphraseKeyPair ppkp = result as PassphraseKeyPair;
-                        if (ppkp.DecryptWithPassphrase(txtPassphrase.Text)) {
+                        if (ppkp.DecryptWithPassphrase(txtPassphrase.Text))
+                        {
                             confirmIsValid(ppkp.GetAddress().AddressBase58);
                             MessageBox.Show("What you provided contains a private key, not just a confirmation. " +
                                 "Confirmation is successful, and with this correct passphrase, " +
                                 "you are also able to spend the funds from the address.", "This is actually a private key",
                                 MessageBoxButtons.OK, MessageBoxIcon.Information);
                             return;
-                        } else {
+                        }
+                        else
+                        {
                             MessageBox.Show("This is not a valid confirmation code.  It looks like an " +
                                 "encrypted private key.  Decryption was attempted but the passphrase couldn't decrypt it", "Invalid confirmation code", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                             return;
@@ -99,9 +113,12 @@ namespace BtcAddress.Forms {
                     }
 
                     string objectKind = result.GetType().Name;
-                    if (objectKind == "AddressBase") {
+                    if (objectKind == "AddressBase")
+                    {
                         objectKind = "an Address";
-                    } else {
+                    }
+                    else
+                    {
                         objectKind = "a " + objectKind;
                     }
 
@@ -113,7 +130,7 @@ namespace BtcAddress.Forms {
 
                 MessageBox.Show("This is not a valid confirmation code.", "Invalid confirmation code", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
-                
+
             }
 
             // extract ownersalt and get an intermediate
@@ -160,7 +177,8 @@ namespace BtcAddress.Forms {
             // reconstitute the ECPoint
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             ECPoint point;
-            try {
+            try
+            {
                 point = ps.Curve.DecodePoint(unencryptedpubkey);
 
                 // multiply passfactor.
@@ -185,15 +203,19 @@ namespace BtcAddress.Forms {
                 sha256.BlockUpdate(addresshashfull, 0, 32);
                 sha256.DoFinal(addresshashfull, 0);
 
-                for (int i = 0; i < 4; i++) {
-                    if (addresshashfull[i] != confbytes[i + 6]) {
+                for (int i = 0; i < 4; i++)
+                {
+                    if (addresshashfull[i] != confbytes[i + 6])
+                    {
                         MessageBox.Show("This passphrase is wrong or does not belong to this confirmation code.", "Invalid passphrase", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         return;
                     }
                 }
 
                 confirmIsValid(generatedaddress.AddressBase58);
-            } catch {
+            }
+            catch
+            {
                 // Might throw an exception - not every 256-bit integer is a valid X coordinate
                 MessageBox.Show("This passphrase is wrong or does not belong to this confirmation code.", "Invalid passphrase", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                 return;
@@ -201,7 +223,8 @@ namespace BtcAddress.Forms {
 
         }
 
-        private void confirmIsValid(string address) {
+        private void confirmIsValid(string address)
+        {
             lblAddressHeader.Visible = true;
             lblAddressItself.Text = address;
             lblAddressItself.Visible = true;

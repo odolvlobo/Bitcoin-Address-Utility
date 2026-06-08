@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 

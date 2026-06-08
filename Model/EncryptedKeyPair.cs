@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -20,7 +20,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Casascius.Bitcoin {
+namespace Casascius.Bitcoin
+{
 
     /// <summary>
     /// Represents an encrypted private key.
@@ -30,7 +31,8 @@ namespace Casascius.Bitcoin {
     /// We might know the public key, but we might not.
     /// We might know the Bitcoin address, but we might not.
     /// </summary>
-    public abstract class EncryptedKeyPair {
+    public abstract class EncryptedKeyPair
+    {
         protected EncryptedKeyPair() { }
 
 
@@ -40,8 +42,10 @@ namespace Casascius.Bitcoin {
         /// </summary>
         protected string _encryptedKey;
 
-        public string EncryptedPrivateKey {
-            get {
+        public string EncryptedPrivateKey
+        {
+            get
+            {
                 return _encryptedKey;
             }
         }
@@ -55,7 +59,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Calculates private key and returns true if calculating private key was possible.
         /// </summary>
-        protected virtual bool calculatePrivKey() {
+        protected virtual bool calculatePrivKey()
+        {
             return false;
         }
 
@@ -65,14 +70,17 @@ namespace Casascius.Bitcoin {
         /// is possible and necessary to determine that we have the private key.
         /// Successful decryption is cached and there is no delay for subsequent checks.
         /// </summary>
-        public virtual bool IsUnencryptedPrivateKeyAvailable() {
+        public virtual bool IsUnencryptedPrivateKeyAvailable()
+        {
             if (_privKey != null) return true;
             if (calculatePrivKey()) return true;
             return false;
         }
 
-        public KeyPair GetUnencryptedPrivateKey() {
-            if (IsUnencryptedPrivateKeyAvailable() == false) {
+        public KeyPair GetUnencryptedPrivateKey()
+        {
+            if (IsUnencryptedPrivateKeyAvailable() == false)
+            {
                 throw new InvalidOperationException("Unencrypted private key is not available");
             }
             return new KeyPair(_privKey, compressed: IsCompressedPoint, addressType: _addressType);
@@ -91,8 +99,10 @@ namespace Casascius.Bitcoin {
         /// This might cause a delay of milliseconds if it must be computed from the public
         /// key, possibly more if it leads to decrypting a private key.
         /// </summary>
-        protected virtual bool calculatePubKey() {
-            if (IsUnencryptedPrivateKeyAvailable()) {
+        protected virtual bool calculatePubKey()
+        {
+            if (IsUnencryptedPrivateKeyAvailable())
+            {
                 KeyPair kp = new KeyPair(_privKey, compressed: IsCompressedPoint, addressType: _addressType);
                 _pubKey = kp.PublicKeyBytes;
                 return true;
@@ -107,16 +117,20 @@ namespace Casascius.Bitcoin {
         /// is possible and necessary to determine that we have the public key.
         /// Successful decryption is cached and there is no delay for subsequent checks.
         /// </summary>
-        public virtual bool IsPublicKeyAvailable() {
+        public virtual bool IsPublicKeyAvailable()
+        {
             if (_pubKey != null) return true;
             if (_privKey != null) return true;
             return false;
         }
 
-        public PublicKey GetPublicKey() {
-            if (_pubKey == null) {
+        public PublicKey GetPublicKey()
+        {
+            if (_pubKey == null)
+            {
                 calculatePubKey();
-                if (IsPublicKeyAvailable() == false) {
+                if (IsPublicKeyAvailable() == false)
+                {
                     throw new InvalidOperationException("Public key is not available");
                 }
             }
@@ -130,8 +144,10 @@ namespace Casascius.Bitcoin {
         /// </summary>
         protected byte[] _hash160;
 
-        protected virtual bool calculateHash160() {
-            if (IsPublicKeyAvailable()) {
+        protected virtual bool calculateHash160()
+        {
+            if (IsPublicKeyAvailable())
+            {
                 PublicKey pub = new PublicKey(_pubKey);
                 _hash160 = pub.Hash160;
                 return true;
@@ -144,7 +160,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Returns true if it is possible to return or calculate the Address.
         /// </summary>
-        public virtual bool IsAddressAvailable() {
+        public virtual bool IsAddressAvailable()
+        {
             // Return true on having the address if we have hash160, pubkey, or privkey (since all can be used
             // to calculate the address).  Avoid actually calculating it because it's expensive.
             if (_hash160 != null) return true;
@@ -157,10 +174,13 @@ namespace Casascius.Bitcoin {
         /// Gets address if known or can be calculated.
         /// Throws an InvalidOperationException if not.
         /// </summary>
-        public AddressBase GetAddress() {
-            if (_hash160 == null) {
+        public AddressBase GetAddress()
+        {
+            if (_hash160 == null)
+            {
                 calculateHash160();
-                if (IsAddressAvailable() == false) {
+                if (IsAddressAvailable() == false)
+                {
                     throw new InvalidOperationException("Address is not available");
                 }
             }

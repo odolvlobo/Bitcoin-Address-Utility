@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -18,29 +18,32 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Security.Cryptography;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Math;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace Casascius.Bitcoin {
+namespace Casascius.Bitcoin
+{
 
     /// <summary>
     /// Bitcoin address extended to include knowledge of public key.
     /// </summary>
-    public class PublicKey : AddressBase {
+    public class PublicKey : AddressBase
+    {
 
         protected PublicKey() { }
 
-        public PublicKey(ECPoint point) {
+        public PublicKey(ECPoint point)
+        {
             // BouncyCastle 2.x points no longer carry a compression flag. This
             // constructor historically produced an uncompressed encoding (its only
             // callers pass Multiply() results, which encoded uncompressed in 1.x).
@@ -51,7 +54,8 @@ namespace Casascius.Bitcoin {
             if (validatePoint() == false) throw new ArgumentException("Not a valid public key");
         }
 
-        public PublicKey(string hex) {
+        public PublicKey(string hex)
+        {
             byte[] pubKeyBytes = Util.HexStringToBytes(hex);
             string result = constructFromBytes(pubKeyBytes);
             if (result != null) throw new ArgumentException(result);
@@ -60,45 +64,59 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Constructor that takes a byte array of 33 or 65 bytes representing a public key.
         /// </summary>
-        public PublicKey(byte[] pubKeyBytes) {
+        public PublicKey(byte[] pubKeyBytes)
+        {
             string result = constructFromBytes(pubKeyBytes);
             if (result != null) throw new ArgumentException(result);
 
         }
 
-        public static bool IsValidPublicKey(string hex) {
+        public static bool IsValidPublicKey(string hex)
+        {
             byte[] pubKeyBytes = Util.HexStringToBytes(hex);
             PublicKey pk = new PublicKey();
             string result = pk.constructFromBytes(pubKeyBytes);
             return (result == null);
         }
 
-        private string constructFromBytes(byte[] pubKeyBytes) {
-            if (pubKeyBytes == null) {
+        private string constructFromBytes(byte[] pubKeyBytes)
+        {
+            if (pubKeyBytes == null)
+            {
                 return "PublicKey constructor requires a byte array with 65 bytes.";
             }
 
-            if (pubKeyBytes.Length == 65) {
-                if (pubKeyBytes[0] != 4) {
+            if (pubKeyBytes.Length == 65)
+            {
+                if (pubKeyBytes[0] != 4)
+                {
                     return "Invalid public key, for 65-byte keys the first byte must be 0x04";
                 }
 
-            } else if (pubKeyBytes.Length == 33) {
-                if (pubKeyBytes[0] != 2 && pubKeyBytes[0] != 3) {
+            }
+            else if (pubKeyBytes.Length == 33)
+            {
+                if (pubKeyBytes[0] != 2 && pubKeyBytes[0] != 3)
+                {
                     return "Invalid public key, for 3-byte keys the first byte must be 0x02 or 0x03";
                 }
                 IsCompressedPoint = true;
-            } else {
+            }
+            else
+            {
                 return "Invalid public key, must be 33 or 65 bytes";
             }
-            try {
+            try
+            {
                 var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
                 point = ps.Curve.DecodePoint(pubKeyBytes);
-                if (validatePoint()==false) return "Not a valid public key";
+                if (validatePoint() == false) return "Not a valid public key";
 
                 // todo: ensure X and Y are on the curve
                 PublicKeyBytes = pubKeyBytes;
-            } catch (Exception e) {
+            }
+            catch (Exception e)
+            {
                 // catches errors like "invalid point compression"
                 return "Not a valid public key: " + e.Message;
             }
@@ -108,7 +126,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Returns true if the point coordinates satisfy the elliptic curve equation.
         /// </summary>
-        private bool validatePoint() {
+        private bool validatePoint()
+        {
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             var p = point.Normalize();
             var x = p.AffineXCoord;
@@ -133,41 +152,48 @@ namespace Casascius.Bitcoin {
         /// if a descendant class (e.g. KeyPair) has a private key and the only way to know
         /// the public key is to compute it.
         /// </summary>
-        protected virtual byte[] ComputePublicKey() { return null;  }
+        protected virtual byte[] ComputePublicKey() { return null; }
 
         /// <summary>
         /// Returns the public key bytes.  This will return 65 bytes for an uncompressed public key
         /// or 33 bytes for a compressed public key.
         /// </summary>
-        public byte[] PublicKeyBytes {
-            get {
+        public byte[] PublicKeyBytes
+        {
+            get
+            {
                 if (_publicKey == null) _publicKey = ComputePublicKey();
 
                 byte[] rv = new byte[_publicKey.Length];
                 _publicKey.CopyTo(rv, 0);
                 return rv;
             }
-            protected set {
+            protected set
+            {
                 _publicKey = new byte[value.Length];
                 value.CopyTo(_publicKey, 0);
             }
         }
 
-        public byte[] GetCompressed() {
+        public byte[] GetCompressed()
+        {
             return getReencoded(true);
         }
 
-        public byte[] GetUncompressed() {
+        public byte[] GetUncompressed()
+        {
             return getReencoded(false);
         }
 
-        public ECPoint GetECPoint() {
+        public ECPoint GetECPoint()
+        {
             byte[] pubKeyBytes = PublicKeyBytes;
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             return ps.Curve.DecodePoint(pubKeyBytes);
         }
-        
-        private byte[] getReencoded(bool compressed) {
+
+        private byte[] getReencoded(bool compressed)
+        {
             byte[] pubKeyBytes = PublicKeyBytes;
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             // BouncyCastle 2.x: compression is chosen at encode time, not stored on
@@ -180,7 +206,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Computes the Hash160 of the public key upon demand.
         /// </summary>
-        protected override byte[] ComputeHash160() {
+        protected override byte[] ComputeHash160()
+        {
             byte[] shaofpubkey = Util.ComputeSha256(PublicKeyBytes);
             // .NET 8+ removed System.Security.Cryptography.RIPEMD160; use BouncyCastle.
             RipeMD160Digest rip = new RipeMD160Digest();
@@ -194,13 +221,15 @@ namespace Casascius.Bitcoin {
         /// Hexadecimal representation of public key.  Each byte is 2 hex digits, uppercase,
         /// delimited with spaces.
         /// </summary>
-        public string PublicKeyHex {
+        public string PublicKeyHex
+        {
 
-            get {
+            get
+            {
                 return Util.ByteArrayToString(PublicKeyBytes);
             }
         }
-        
+
 
 
     }

@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -20,21 +20,25 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Windows.Forms;
 using System.Threading;
-using System.Diagnostics;
+using System.Windows.Forms;
 using Casascius.Bitcoin;
 
-namespace BtcAddress.Forms {
-    public partial class AddressGen : Form {
-        public AddressGen() {
+namespace BtcAddress.Forms
+{
+    public partial class AddressGen : Form
+    {
+        public AddressGen()
+        {
             InitializeComponent();
         }
 
-        private enum GenChoices {
+        private enum GenChoices
+        {
             Minikey, WIF, Encrypted, Deterministic, TwoFactor
         }
 
@@ -61,33 +65,48 @@ namespace BtcAddress.Forms {
 
         private int intermediateIdx;
 
-        private void rdoWalletType_CheckedChanged(object sender, EventArgs e) {
+        private void rdoWalletType_CheckedChanged(object sender, EventArgs e)
+        {
             txtTextInput.Text = "";
             txtTextInput.Visible = (rdoDeterministicWallet.Checked || rdoEncrypted.Checked);
             lblTextInput.Visible = (rdoDeterministicWallet.Checked || rdoEncrypted.Checked || rdoTwoFactor.Checked);
-            if (rdoDeterministicWallet.Checked) {
+            if (rdoDeterministicWallet.Checked)
+            {
                 lblTextInput.Text = "Seed for deterministic generation";
-            } else if (rdoEncrypted.Checked) {
+            }
+            else if (rdoEncrypted.Checked)
+            {
                 lblTextInput.Text = "Encryption passphrase or Intermediate Code";
-            } else if (rdoTwoFactor.Checked) {
+            }
+            else if (rdoTwoFactor.Checked)
+            {
                 int icodect = ScanClipboardForIntermediateCodes().Count;
-                if (icodect == 0) {
+                if (icodect == 0)
+                {
                     lblTextInput.Text = "Copy one or more intermediate codes to the clipboard.";
-                } else {
+                }
+                else
+                {
                     lblTextInput.Text = icodect + " intermediate codes found on clipboard.";
                 }
             }
             chkRetainPrivKey.Visible = (rdoEncrypted.Checked);
         }
 
-        private void AddressGen_FormClosing(object sender, FormClosingEventArgs e) {
+        private void AddressGen_FormClosing(object sender, FormClosingEventArgs e)
+        {
             if (PermissionToCloseWindow) return;
-            if (Generating) {
-                if (MessageBox.Show("Cancel and abandon generation in progress?", "Abort generation", MessageBoxButtons.YesNo) == System.Windows.Forms.DialogResult.No) {
+            if (Generating)
+            {
+                if (MessageBox.Show("Cancel and abandon generation in progress?", "Abort generation", MessageBoxButtons.YesNo) == System.Windows.Forms.DialogResult.No)
+                {
                     e.Cancel = true;
-                } else {
+                }
+                else
+                {
                     StopRequested = true;
-                    if (GenerationThread.ThreadState == System.Threading.ThreadState.Running) {
+                    if (GenerationThread.ThreadState == System.Threading.ThreadState.Running)
+                    {
                         GenerationThread.Join();
                         GeneratedItems.Clear();
                     }
@@ -95,20 +114,24 @@ namespace BtcAddress.Forms {
             }
         }
 
-        private void btnGenerateAddresses_Click(object sender, EventArgs e) {
+        private void btnGenerateAddresses_Click(object sender, EventArgs e)
+        {
 
-            if (Generating) {
+            if (Generating)
+            {
                 StopRequested = true;
                 btnGenerateAddresses.Text = "Stopping...";
                 return;
             }
 
-            if (rdoEncrypted.Checked && txtTextInput.Text == "") {
+            if (rdoEncrypted.Checked && txtTextInput.Text == "")
+            {
                 MessageBox.Show("An encryption passphrase is required. Choose a different option if you don't want encrypted keys.",
                     "Passphrase missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            if (rdoDeterministicWallet.Checked && txtTextInput.Text == "") {
+            if (rdoDeterministicWallet.Checked && txtTextInput.Text == "")
+            {
                 MessageBox.Show("A deterministic seed is required.  If you do not intend to create a deterministic " +
                     "wallet or know what one is used for, it is recommended you choose one of the other options.  An inappropriate seed can result " +
                     "in the unexpected theft of funds.",
@@ -116,10 +139,12 @@ namespace BtcAddress.Forms {
                 return;
             }
 
-            if (rdoTwoFactor.Checked) {
+            if (rdoTwoFactor.Checked)
+            {
                 // Read the clipboard for intermediate codes
                 List<Bip38Intermediate> intermediates = ScanClipboardForIntermediateCodes();
-                if (intermediates.Count == 0) {
+                if (intermediates.Count == 0)
+                {
                     MessageBox.Show("No valid intermediate codes were found on the clipboard.  Intermediate codes are typically " +
                         "sent to you from someone else desiring paper wallets, or from your mobile phone.  Copy the received intermediate " +
                         "codes to the clipboard, and try again.  Address Generator automatically detects valid intermediate codes and ignores " +
@@ -130,7 +155,9 @@ namespace BtcAddress.Forms {
                 intermediatesForGeneration = intermediates.ToArray();
                 intermediateIdx = 0;
 
-            } else {
+            }
+            else
+            {
                 intermediatesForGeneration = null;
             }
 
@@ -141,7 +168,8 @@ namespace BtcAddress.Forms {
             RetainPrivateKeys = chkRetainPrivKey.Checked;
 
             if (rdoDeterministicWallet.Checked) GenChoice = GenChoices.Deterministic;
-            if (rdoEncrypted.Checked) {
+            if (rdoEncrypted.Checked)
+            {
                 GenChoice = GenChoices.Encrypted;
                 // intermediate codes start with "passphrasek" thru "passphrases"
                 string ti = txtTextInput.Text.Trim();
@@ -149,7 +177,8 @@ namespace BtcAddress.Forms {
             }
             if (rdoMiniKeys.Checked) GenChoice = GenChoices.Minikey;
             if (rdoRandomWallet.Checked) GenChoice = GenChoices.WIF;
-            if (rdoTwoFactor.Checked) {
+            if (rdoTwoFactor.Checked)
+            {
                 GenChoice = GenChoices.TwoFactor;
             }
 
@@ -165,16 +194,23 @@ namespace BtcAddress.Forms {
 
         }
 
-        private void SetControlsEnabled(bool enabled) {
-            foreach (Control c in this.Controls) {
-                if (c is TextBox) {
+        private void SetControlsEnabled(bool enabled)
+        {
+            foreach (Control c in this.Controls)
+            {
+                if (c is TextBox)
+                {
                     ((TextBox)c).Enabled = enabled;
-                } else if (c is NumericUpDown) {
+                }
+                else if (c is NumericUpDown)
+                {
                     ((NumericUpDown)c).Enabled = enabled;
                 }
             }
-            foreach (Control c in groupBox1.Controls) {
-                if (c is RadioButton) {
+            foreach (Control c in groupBox1.Controls)
+            {
+                if (c is RadioButton)
+                {
                     ((RadioButton)c).Enabled = enabled;
                 }
             }
@@ -184,18 +220,22 @@ namespace BtcAddress.Forms {
         /// <summary>
         /// Code which is actually run on the generation thread.
         /// </summary>
-        private void GenerationThreadProcess() {
+        private void GenerationThreadProcess()
+        {
 
             Bip38Intermediate intermediate = null;
-            if (GenChoice == GenChoices.Encrypted) {
-                intermediate = new Bip38Intermediate(UserText, Bip38Intermediate.Interpretation.Passphrase);                
+            if (GenChoice == GenChoices.Encrypted)
+            {
+                intermediate = new Bip38Intermediate(UserText, Bip38Intermediate.Interpretation.Passphrase);
             }
 
             int detcount = 1;
 
-            while (RemainingToGenerate > 0 && StopRequested == false) {
+            while (RemainingToGenerate > 0 && StopRequested == false)
+            {
                 KeyCollectionItem newitem = null;
-                switch (GenChoice) {
+                switch (GenChoice)
+                {
                     case GenChoices.Minikey:
                         MiniKeyPair mkp = MiniKeyPair.CreateRandom(ExtraEntropy.GetEntropy());
                         string s = mkp.AddressBase58; // read the property to entice it to compute everything
@@ -223,7 +263,8 @@ namespace BtcAddress.Forms {
                         break;
                 }
 
-                lock (GeneratedItems) {
+                lock (GeneratedItems)
+                {
                     GeneratedItems.Add(newitem);
                     RemainingToGenerate--;
                 }
@@ -231,15 +272,18 @@ namespace BtcAddress.Forms {
             GeneratingEnded = true;
         }
 
-        private List<Bip38Intermediate> ScanClipboardForIntermediateCodes() {
+        private List<Bip38Intermediate> ScanClipboardForIntermediateCodes()
+        {
             string cliptext = Clipboard.GetText(TextDataFormat.UnicodeText);
             List<object> objects = StringInterpreter.InterpretBatch(cliptext);
             List<Bip38Intermediate> intermediates = new List<Bip38Intermediate>(from c in objects where c is Bip38Intermediate select c as Bip38Intermediate);
             return intermediates;
         }
 
-        private void timer1_Tick(object sender, EventArgs e) {
-            if (GeneratingEnded) {
+        private void timer1_Tick(object sender, EventArgs e)
+        {
+            if (GeneratingEnded)
+            {
                 Generating = false;
                 GeneratingEnded = false;
                 toolStripProgressBar1.Value = 0;
@@ -249,15 +293,21 @@ namespace BtcAddress.Forms {
                 btnGenerateAddresses.Text = "Generate Addresses";
                 timer1.Enabled = false;
                 SetControlsEnabled(true);
-                if (StopRequested == false) {
+                if (StopRequested == false)
+                {
                     PermissionToCloseWindow = true;
                     this.Close();
-                } else if (GeneratedItems.Count > 0) {
+                }
+                else if (GeneratedItems.Count > 0)
+                {
                     toolStripStatusLabel1.Text = "Keys generated: " + GeneratedItems.Count;
-                    if (PermissionToCloseWindow) {
+                    if (PermissionToCloseWindow)
+                    {
                         this.Close();
                         return;
-                    } else if (MessageBox.Show("Keep the " + GeneratedItems.Count + " generated keys?", "Cancel generation", MessageBoxButtons.YesNo) == System.Windows.Forms.DialogResult.No) {
+                    }
+                    else if (MessageBox.Show("Keep the " + GeneratedItems.Count + " generated keys?", "Cancel generation", MessageBoxButtons.YesNo) == System.Windows.Forms.DialogResult.No)
+                    {
                         GeneratedItems.Clear();
                     }
                     PermissionToCloseWindow = true;
@@ -266,16 +316,21 @@ namespace BtcAddress.Forms {
                 return;
             }
 
-            if (Generating) {
+            if (Generating)
+            {
                 int generated = 0;
                 int totaltogenerate = 0;
-                lock (GeneratedItems) {
+                lock (GeneratedItems)
+                {
                     generated = GeneratedItems.Count;
                     totaltogenerate = generated + RemainingToGenerate;
                 }
-                if (generated == 0 && rdoEncrypted.Checked) {
+                if (generated == 0 && rdoEncrypted.Checked)
+                {
                     toolStripStatusLabel1.Text = "Hashing the passphrase...";
-                } else {
+                }
+                else
+                {
                     toolStripStatusLabel1.Text = "Keys generated: " + generated;
                     toolStripProgressBar1.Maximum = totaltogenerate;
                     toolStripProgressBar1.Value = generated;

@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -18,12 +18,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Drawing;
 
-namespace BtcAddress {
-    public class Barcode128b {
+namespace BtcAddress
+{
+    public class Barcode128b
+    {
         /// <summary>
         /// There are 107 total patterns.  Patterns 0-94 correspond to ASCII codes 32-126.
         /// Patterns 104 and 106 are the start and stop codes for 128-B.
@@ -43,16 +45,19 @@ namespace BtcAddress {
 
 
 
-        private static string getPatternsForMessage(string message) {
+        private static string getPatternsForMessage(string message)
+        {
             StringBuilder rv = new StringBuilder();
-            
+
             // add in the start code for 128-B, as well as pre-seed the checksum
             rv.Append(patterns[104]);
             int runningChecksum = 104;
             int posNumber = 1;
 
-            foreach (char c in message.ToCharArray()) {
-                if (c >= ' ' && c <= '~') { // chars 32 thru 126
+            foreach (char c in message.ToCharArray())
+            {
+                if (c >= ' ' && c <= '~')
+                { // chars 32 thru 126
                     int sym = c - 0x20;
                     rv.Append(patterns[sym]);
                     runningChecksum = (runningChecksum + sym * posNumber) % 103;
@@ -66,7 +71,8 @@ namespace BtcAddress {
             return rv.ToString();
         }
 
-        public static Bitmap GetBarcode(string message) {
+        public static Bitmap GetBarcode(string message)
+        {
 
             int pixelspermodule = 1;
             int margininmodules = 12;
@@ -75,7 +81,7 @@ namespace BtcAddress {
             string pattern = getPatternsForMessage(message);
 
             // get number of modules.  Pretty simple, just add up all the digits in the pattern.
-            int modulecount=0;
+            int modulecount = 0;
             foreach (char c in pattern.ToCharArray()) modulecount += (c - '0');
 
             int neededWidth = pixelspermodule * (margininmodules + margininmodules + modulecount);
@@ -84,7 +90,7 @@ namespace BtcAddress {
             SolidBrush brush = new SolidBrush(Color.White);
 
             Graphics gr = Graphics.FromImage(b);
-            
+
             // start with a white background
             gr.FillRectangle(brush, new Rectangle(0, 0, neededWidth, neededHeight));
 
@@ -92,9 +98,11 @@ namespace BtcAddress {
 
             int currentmodule = margininmodules;
             bool nowBlack = true;
-            foreach (char c in pattern.ToCharArray()) {
+            foreach (char c in pattern.ToCharArray())
+            {
                 int modulewidth = (c - '0');
-                if (nowBlack) {
+                if (nowBlack)
+                {
                     gr.FillRectangle(brush, currentmodule * pixelspermodule, 0, modulewidth * pixelspermodule, neededHeight);
                 }
                 nowBlack = !nowBlack;

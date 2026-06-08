@@ -1,4 +1,4 @@
-﻿#region License
+#region License
 /*
 Illusory Studios C# Crypto Library (CryptSharp)
 Copyright (c) 2011 James F. Bellinger <jfb@zer7.com>
@@ -21,40 +21,47 @@ using System;
 using System.Security.Cryptography;
 using System.Threading;
 
-namespace CryptSharp.Utility {
+namespace CryptSharp.Utility
+{
     // See http://www.tarsnap.com/scrypt/scrypt.pdf for algorithm details.
     // TODO: Test on a big-endian machine and make sure it works.
     // TODO: Feel hatred for whatever genius decided C# wouldn't have 'safe'
     //       stack-allocated arrays. He has stricken ugliness upon a thousand codes.
-    public static class SCrypt {
+    public static class SCrypt
+    {
         const int hLen = 32;
         static readonly Pbkdf2.ComputeHmacCallback _hmacCallback =
             Pbkdf2.CallbackFromHmac<HMACSHA256>();
 
         public static void ComputeKey(byte[] key, byte[] salt,
-            int cost, int blockSize, int parallel, int? maxThreads, byte[] output) {
+            int cost, int blockSize, int parallel, int? maxThreads, byte[] output)
+        {
             using (Pbkdf2 kdf = GetStream(key, salt, cost, blockSize, parallel, maxThreads)) { kdf.Read(output); }
         }
 
         public static byte[] GetEffectivePbkdf2Salt(byte[] key, byte[] salt,
-            int cost, int blockSize, int parallel, int? maxThreads) {
+            int cost, int blockSize, int parallel, int? maxThreads)
+        {
             Helper.CheckNull("key", key); Helper.CheckNull("salt", salt);
             return MFcrypt(key, salt, cost, blockSize, parallel, maxThreads);
         }
 
         public static Pbkdf2 GetStream(byte[] key, byte[] salt,
-            int cost, int blockSize, int parallel, int? maxThreads) {
+            int cost, int blockSize, int parallel, int? maxThreads)
+        {
             byte[] B = GetEffectivePbkdf2Salt(key, salt, cost, blockSize, parallel, maxThreads);
             Pbkdf2 kdf = new Pbkdf2(key, B, 1, _hmacCallback, hLen);
             Clear(B); return kdf;
         }
 
-        static void Clear(Array arr) {
+        static void Clear(Array arr)
+        {
             Array.Clear(arr, 0, arr.Length);
         }
 
         static byte[] MFcrypt(byte[] P, byte[] S,
-            int cost, int blockSize, int parallel, int? maxThreads) {
+            int cost, int blockSize, int parallel, int? maxThreads)
+        {
             int MFLen = blockSize * 128;
             if (maxThreads == null) { maxThreads = int.MaxValue; }
 
@@ -76,10 +83,13 @@ namespace CryptSharp.Utility {
         }
 
         static void ThreadSMixCalls(uint[] B0, int MFLen,
-            int cost, int blockSize, int parallel, int maxThreads) {
+            int cost, int blockSize, int parallel, int maxThreads)
+        {
             int current = 0;
-            ThreadStart workerThread = delegate() {
-                while (true) {
+            ThreadStart workerThread = delegate ()
+            {
+                while (true)
+                {
                     int j = Interlocked.Increment(ref current) - 1;
                     if (j >= parallel) { break; }
 
@@ -94,7 +104,8 @@ namespace CryptSharp.Utility {
             for (int i = 0; i < threads.Length; i++) { threads[i].Join(); }
         }
 
-        static void SMix(uint[] B, int Boffset, uint[] Bp, int Bpoffset, uint N, int r) {
+        static void SMix(uint[] B, int Boffset, uint[] Bp, int Bpoffset, uint N, int r)
+        {
             uint Nmask = N - 1; int Bs = 16 * 2 * r;
             uint[] scratch1 = new uint[16], scratch2 = new uint[16];
             uint[] scratchX = new uint[16], scratchY = new uint[Bs];
@@ -104,11 +115,13 @@ namespace CryptSharp.Utility {
             for (int i = 0; i < v.Length; i++) { v[i] = new uint[Bs]; }
 
             Array.Copy(B, Boffset, x, 0, Bs);
-            for (uint i = 0; i < N; i++) {
+            for (uint i = 0; i < N; i++)
+            {
                 Array.Copy(x, v[i], Bs);
                 BlockMix(x, 0, x, 0, scratchX, scratchY, scratch1, scratch2, r);
             }
-            for (uint i = 0; i < N; i++) {
+            for (uint i = 0; i < N; i++)
+            {
                 uint j = x[Bs - 16] & Nmask; uint[] vj = v[j];
                 for (int k = 0; k < scratchZ.Length; k++) { scratchZ[k] = x[k] ^ vj[k]; }
                 BlockMix(scratchZ, 0, x, 0, scratchX, scratchY, scratch1, scratch2, r);
@@ -130,11 +143,13 @@ namespace CryptSharp.Utility {
              uint[] y,        // 16*2*r -- unnecessary but it allows us to alias B and Bp
              uint[] scratch1, // 16
              uint[] scratch2, // 16
-             int r) {
+             int r)
+        {
             int k = Boffset, m = 0, n = 16 * r;
             Array.Copy(B, (2 * r - 1) * 16, x, 0, 16);
 
-            for (int i = 0; i < r; i++) {
+            for (int i = 0; i < r; i++)
+            {
                 for (int j = 0; j < scratch1.Length; j++) { scratch1[j] = x[j] ^ B[j + k]; }
                 Salsa20Core.Compute(8, scratch1, 0, x, 0, scratch2);
                 Array.Copy(x, 0, y, m, 16);

@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -18,26 +18,30 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Drawing;
-using System.Security.Cryptography;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
 using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace Casascius.Bitcoin {
-    public class Util {
-        public static string PassphraseToPrivHex(string passphrase) {
+namespace Casascius.Bitcoin
+{
+    public class Util
+    {
+        public static string PassphraseToPrivHex(string passphrase)
+        {
             return ByteArrayToString(ComputeSha256(passphrase));
         }
 
-        public static string ByteArrayToBase58Check(byte[] ba) {
+        public static string ByteArrayToBase58Check(byte[] ba)
+        {
 
             byte[] bb = new byte[ba.Length + 4];
             Array.Copy(ba, bb, ba.Length);
@@ -52,24 +56,31 @@ namespace Casascius.Bitcoin {
         }
 
 
-        public static byte[] ValidateAndGetHexPublicKey(string PubHex) {
+        public static byte[] ValidateAndGetHexPublicKey(string PubHex)
+        {
             byte[] hex = GetHexBytes(PubHex, 64);
 
-            if (hex == null || hex.Length < 64 || hex.Length > 65) {
+            if (hex == null || hex.Length < 64 || hex.Length > 65)
+            {
                 throw new ApplicationException("Hex is not 64 or 65 bytes.");
             }
 
             // if leading 00, change it to 0x80
-            if (hex.Length == 65) {
-                if (hex[0] == 0 || hex[0] == 4) {
+            if (hex.Length == 65)
+            {
+                if (hex[0] == 0 || hex[0] == 4)
+                {
                     hex[0] = 4;
-                } else {
+                }
+                else
+                {
                     throw new ApplicationException("Not a valid public key");
                 }
             }
 
             // add 0x80 byte if not present
-            if (hex.Length == 64) {
+            if (hex.Length == 64)
+            {
                 byte[] hex2 = new byte[65];
                 Array.Copy(hex, 0, hex2, 1, 64);
                 hex2[0] = 4;
@@ -78,45 +89,55 @@ namespace Casascius.Bitcoin {
             return hex;
         }
 
-        public static byte[] ValidateAndGetHexPublicHash(string PubHash) {
+        public static byte[] ValidateAndGetHexPublicHash(string PubHash)
+        {
             byte[] hex = GetHexBytes(PubHash, 20);
 
-            if (hex == null || hex.Length != 20) {
+            if (hex == null || hex.Length != 20)
+            {
                 throw new ApplicationException("Hex is not 20 bytes.");
             }
             return hex;
         }
 
 
-        public static byte[] ValidateAndGetHexPrivateKey(byte leadingbyte, string PrivHex, int desiredByteCount) {
+        public static byte[] ValidateAndGetHexPrivateKey(byte leadingbyte, string PrivHex, int desiredByteCount)
+        {
             if (desiredByteCount != 32 && desiredByteCount != 33) throw new ApplicationException("desiredByteCount must be 32 or 33");
 
             byte[] hex = GetHexBytes(PrivHex, 32);
 
-            if (hex == null || hex.Length < 32 || hex.Length > 33) {
+            if (hex == null || hex.Length < 32 || hex.Length > 33)
+            {
                 throw new ApplicationException("Hex is not 32 or 33 bytes.");
             }
 
             // if leading 00, change it to 0x80
-            if (hex.Length == 33) {
-                if (hex[0] == 0 || hex[0] == 0x80) {
+            if (hex.Length == 33)
+            {
+                if (hex[0] == 0 || hex[0] == 0x80)
+                {
                     hex[0] = 0x80;
-                } else {
+                }
+                else
+                {
                     throw new ApplicationException("Not a valid private key");
                 }
             }
 
             // add 0x80 byte if not present
-            if (hex.Length == 32 && desiredByteCount==33) {
+            if (hex.Length == 32 && desiredByteCount == 33)
+            {
                 byte[] hex2 = new byte[33];
                 Array.Copy(hex, 0, hex2, 1, 32);
                 hex2[0] = 0x80;
                 hex = hex2;
             }
 
-            if (desiredByteCount==33) hex[0] = leadingbyte;
+            if (desiredByteCount == 33) hex[0] = leadingbyte;
 
-            if (desiredByteCount == 32 && hex.Length == 33) {
+            if (desiredByteCount == 32 && hex.Length == 33)
+            {
                 byte[] hex2 = new byte[33];
                 Array.Copy(hex, 1, hex2, 0, 32);
                 hex = hex2;
@@ -130,13 +151,16 @@ namespace Casascius.Bitcoin {
         /// Trims whitespace from within and outside string.
         /// Whitespace is anything non-alphanumeric that may have been inserted into a string.
         /// </summary>
-        public static string Base58Trim(string base58) {
+        public static string Base58Trim(string base58)
+        {
             char[] strin = base58.ToCharArray();
             char[] cc = new char[base58.Length];
             int pos = 0;
-            for (int i = 0; i < base58.Length; i++) {
+            for (int i = 0; i < base58.Length; i++)
+            {
                 char c = strin[i];
-                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')) {
+                if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z'))
+                {
                     cc[pos++] = c;
                 }
             }
@@ -149,10 +173,12 @@ namespace Casascius.Bitcoin {
         /// the checksum calculation, but still strips the four checksum bytes from the
         /// result.
         /// </summary>
-        public static byte[] Base58CheckToByteArray(string base58) {
+        public static byte[] Base58CheckToByteArray(string base58)
+        {
 
             bool IgnoreChecksum = false;
-            if (base58.EndsWith("?")) {
+            if (base58.EndsWith("?"))
+            {
                 IgnoreChecksum = true;
                 base58 = base58.Substring(0, base58.Length - 1);
             }
@@ -160,7 +186,8 @@ namespace Casascius.Bitcoin {
             byte[] bb = Base58.ToByteArray(base58);
             if (bb == null || bb.Length < 4) return null;
 
-            if (IgnoreChecksum == false) {
+            if (IgnoreChecksum == false)
+            {
                 Sha256Digest bcsha256a = new Sha256Digest();
                 bcsha256a.BlockUpdate(bb, 0, bb.Length - 4);
 
@@ -169,7 +196,8 @@ namespace Casascius.Bitcoin {
                 bcsha256a.BlockUpdate(checksum, 0, 32);
                 bcsha256a.DoFinal(checksum, 0);
 
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < 4; i++)
+                {
                     if (checksum[i] != bb[bb.Length - 4 + i]) return null;
                 }
             }
@@ -179,14 +207,17 @@ namespace Casascius.Bitcoin {
             return rv;
         }
 
-        public static string ByteArrayToString(byte[] ba) {
+        public static string ByteArrayToString(byte[] ba)
+        {
             return ByteArrayToString(ba, 0, ba.Length);
         }
 
-        public static string ByteArrayToString(byte[] ba, int offset, int count) {
+        public static string ByteArrayToString(byte[] ba, int offset, int count)
+        {
             string rv = "";
             int usedcount = 0;
-            for (int i = offset; usedcount < count; i++, usedcount++) {
+            for (int i = offset; usedcount < count; i++, usedcount++)
+            {
                 rv += String.Format("{0:X2}", ba[i]) + " ";
             }
             return rv;
@@ -195,17 +226,20 @@ namespace Casascius.Bitcoin {
 
 
 
-        public static byte[] GetHexBytes(string source, int minimum) {
+        public static byte[] GetHexBytes(string source, int minimum)
+        {
             byte[] hex = HexStringToBytes(source);
             if (hex == null) return null;
             // assume leading zeroes if we're short a few bytes
-            if (hex.Length > (minimum - 6) && hex.Length < minimum) {
+            if (hex.Length > (minimum - 6) && hex.Length < minimum)
+            {
                 byte[] hex2 = new byte[minimum];
                 Array.Copy(hex, 0, hex2, minimum - hex.Length, hex.Length);
                 hex = hex2;
             }
             // clip off one overhanging leading zero if present
-            if (hex.Length == minimum + 1 && hex[0] == 0) {
+            if (hex.Length == minimum + 1 && hex[0] == 0)
+            {
                 byte[] hex2 = new byte[minimum];
                 Array.Copy(hex, 1, hex2, 0, minimum);
                 hex = hex2;
@@ -221,51 +255,64 @@ namespace Casascius.Bitcoin {
         /// any two contiguous hex chars are considered to be a byte.  If testingForValidHex==true,
         /// then if any invalid characters are found, the function returns null instead of bytes.
         /// </summary>
-        public static byte[] HexStringToBytes(string source, bool testingForValidHex=false) {
+        public static byte[] HexStringToBytes(string source, bool testingForValidHex = false)
+        {
             List<byte> bytes = new List<byte>();
             bool gotFirstChar = false;
             byte accum = 0;
 
-            foreach (char c in source.ToCharArray()) {                
-                if (c == ' ' || c == '-' || c == ':') {
+            foreach (char c in source.ToCharArray())
+            {
+                if (c == ' ' || c == '-' || c == ':')
+                {
                     // if we got a space, then accept it as the end if we have 1 character.
-                    if (gotFirstChar) {
+                    if (gotFirstChar)
+                    {
                         bytes.Add(accum);
                         accum = 0;
                         gotFirstChar = false;
                     }
-                } else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) {
+                }
+                else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
+                {
                     // get the character's value
                     byte v = (byte)(c - 0x30);
                     if (c >= 'A' && c <= 'F') v = (byte)(c + 0x0a - 'A');
                     if (c >= 'a' && c <= 'f') v = (byte)(c + 0x0a - 'a');
 
-                    if (gotFirstChar == false) {
+                    if (gotFirstChar == false)
+                    {
                         gotFirstChar = true;
                         accum = v;
-                    } else {
+                    }
+                    else
+                    {
                         accum <<= 4;
                         accum += v;
                         bytes.Add(accum);
                         accum = 0;
                         gotFirstChar = false;
                     }
-                } else {
+                }
+                else
+                {
                     if (testingForValidHex) return null;
                 }
             }
             if (gotFirstChar) bytes.Add(accum);
-            return bytes.ToArray();    
+            return bytes.ToArray();
         }
 
 
 
-        public static string PrivHexToPubHex(string PrivHex) {
+        public static string PrivHexToPubHex(string PrivHex)
+        {
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             return PrivHexToPubHex(PrivHex, ps.G);
         }
 
-        public static string PrivHexToPubHex(string PrivHex, ECPoint point) {
+        public static string PrivHexToPubHex(string PrivHex, ECPoint point)
+        {
 
             byte[] hex = ValidateAndGetHexPrivateKey(0x00, PrivHex, 33);
             if (hex == null) throw new ApplicationException("Invalid private hex key");
@@ -273,12 +320,13 @@ namespace Casascius.Bitcoin {
             ECPoint dd = point.Multiply(Db);
 
             byte[] pubaddr = PubKeyToByteArray(dd);
-                
+
             return ByteArrayToString(pubaddr);
 
         }
 
-        public static ECPoint PrivHexToPubKey(string PrivHex) {
+        public static ECPoint PrivHexToPubKey(string PrivHex)
+        {
             byte[] hex = ValidateAndGetHexPrivateKey(0x00, PrivHex, 33);
             if (hex == null) throw new ApplicationException("Invalid private hex key");
             Org.BouncyCastle.Math.BigInteger Db = new Org.BouncyCastle.Math.BigInteger(1, hex);
@@ -286,15 +334,17 @@ namespace Casascius.Bitcoin {
             return ps.G.Multiply(Db);
         }
 
-        public static ECPoint PrivKeyToPubKey(byte[] PrivKey) {
-            if (PrivKey == null || PrivKey.Length > 32) throw new ApplicationException("Invalid private hex key");            
+        public static ECPoint PrivKeyToPubKey(byte[] PrivKey)
+        {
+            if (PrivKey == null || PrivKey.Length > 32) throw new ApplicationException("Invalid private hex key");
             Org.BouncyCastle.Math.BigInteger Db = new Org.BouncyCastle.Math.BigInteger(1, PrivKey);
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             return ps.G.Multiply(Db);
         }
 
 
-        public static byte[] PubKeyToByteArray(ECPoint point) {
+        public static byte[] PubKeyToByteArray(ECPoint point)
+        {
             // BouncyCastle 2.x: Multiply() yields a non-normalized point; affine
             // coordinates are only valid after Normalize(). (.X/.Y were removed.)
             point = point.Normalize();
@@ -307,13 +357,15 @@ namespace Casascius.Bitcoin {
             return pubaddr;
         }
 
-        public static string PubHexToPubHash(string PubHex) {
+        public static string PubHexToPubHash(string PubHex)
+        {
             byte[] hex = ValidateAndGetHexPublicKey(PubHex);
             if (hex == null) throw new ApplicationException("Invalid public hex key");
             return PubHexToPubHash(hex);
         }
 
-        public static string PubHexToPubHash(byte[] PubHex) {
+        public static string PubHexToPubHash(byte[] PubHex)
+        {
 
             byte[] shaofpubkey = ComputeSha256(PubHex);
 
@@ -327,7 +379,8 @@ namespace Casascius.Bitcoin {
 
         }
 
-        public static string PubHashToAddress(string PubHash, string AddressType) {
+        public static string PubHashToAddress(string PubHash, string AddressType)
+        {
             byte[] hex = ValidateAndGetHexPublicHash(PubHash);
             if (hex == null) throw new ApplicationException("Invalid public hex key");
 
@@ -346,19 +399,30 @@ namespace Casascius.Bitcoin {
 
         }
 
-        public static bool PassphraseTooSimple(string passphrase) {
+        public static bool PassphraseTooSimple(string passphrase)
+        {
 
             int Lowercase = 0, Uppercase = 0, Numbers = 0, Symbols = 0, Spaces = 0;
-            foreach (char c in passphrase.ToCharArray()) {
-                if (c >= 'a' && c <= 'z') {
+            foreach (char c in passphrase.ToCharArray())
+            {
+                if (c >= 'a' && c <= 'z')
+                {
                     Lowercase++;
-                } else if (c >= 'A' && c <= 'Z') {
+                }
+                else if (c >= 'A' && c <= 'Z')
+                {
                     Uppercase++;
-                } else if (c >= '0' && c <= '9') {
+                }
+                else if (c >= '0' && c <= '9')
+                {
                     Numbers++;
-                } else if (c == ' ') {
+                }
+                else if (c == ' ')
+                {
                     Spaces++;
-                } else {
+                }
+                else
+                {
                     Symbols++;
                 }
             }
@@ -366,7 +430,8 @@ namespace Casascius.Bitcoin {
             // let mini private keys through - they won't contain words, they are nonsense characters, so their entropy is a bit better per character
             if (MiniKeyPair.IsValidMiniKey(passphrase) != 1) return false;
 
-            if (passphrase.Length < 30 && (Lowercase < 10 || Uppercase < 3 || Numbers < 2 || Symbols < 2)) {
+            if (passphrase.Length < 30 && (Lowercase < 10 || Uppercase < 3 || Numbers < 2 || Symbols < 2))
+            {
                 return true;
             }
 
@@ -374,13 +439,15 @@ namespace Casascius.Bitcoin {
 
         }
 
-        public static byte[] ComputeSha256(string ofwhat) {
+        public static byte[] ComputeSha256(string ofwhat)
+        {
             UTF8Encoding utf8 = new UTF8Encoding(false);
             return ComputeSha256(utf8.GetBytes(ofwhat));
         }
 
 
-        public static byte[] ComputeSha256(byte[] ofwhat) {
+        public static byte[] ComputeSha256(byte[] ofwhat)
+        {
             Sha256Digest sha256 = new Sha256Digest();
             sha256.BlockUpdate(ofwhat, 0, ofwhat.Length);
             byte[] rv = new byte[32];
@@ -388,29 +455,35 @@ namespace Casascius.Bitcoin {
             return rv;
         }
 
-        public static byte[] ComputeDoubleSha256(string ofwhat) {
+        public static byte[] ComputeDoubleSha256(string ofwhat)
+        {
             UTF8Encoding utf8 = new UTF8Encoding(false);
             return ComputeDoubleSha256(utf8.GetBytes(ofwhat));
         }
 
-        public static byte[] ComputeDoubleSha256(byte[] ofwhat) {
+        public static byte[] ComputeDoubleSha256(byte[] ofwhat)
+        {
             Sha256Digest sha256 = new Sha256Digest();
             sha256.BlockUpdate(ofwhat, 0, ofwhat.Length);
             byte[] rv = new byte[32];
             sha256.DoFinal(rv, 0);
-            sha256.BlockUpdate(rv, 0, rv.Length);           
+            sha256.BlockUpdate(rv, 0, rv.Length);
             sha256.DoFinal(rv, 0);
             return rv;
         }
 
         public static Int64 nonce = 0;
 
-        public static byte[] Force32Bytes(byte[] inbytes) {
+        public static byte[] Force32Bytes(byte[] inbytes)
+        {
             if (inbytes.Length == 32) return inbytes;
             byte[] rv = new byte[32];
-            if (inbytes.Length > 32) {
+            if (inbytes.Length > 32)
+            {
                 Array.Copy(inbytes, inbytes.Length - 32, rv, 0, 32);
-            } else {
+            }
+            else
+            {
                 Array.Copy(inbytes, 0, rv, 32 - inbytes.Length, inbytes.Length);
             }
             return rv;
@@ -419,7 +492,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Extension for cloning a byte array
         /// </summary>
-        public static byte[] CloneByteArray(byte[] ba) {
+        public static byte[] CloneByteArray(byte[] ba)
+        {
             if (ba == null) return null;
             byte[] copy = new byte[ba.Length];
             Array.Copy(ba, copy, ba.Length);
@@ -429,19 +503,22 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Extension for cloning a portion of a byte array
         /// </summary>
-        public static byte[] CloneByteArray(byte[] ba, int offset, int length) {
+        public static byte[] CloneByteArray(byte[] ba, int offset, int length)
+        {
             if (ba == null) return null;
             byte[] copy = new byte[length];
             Array.Copy(ba, offset, copy, 0, length);
             return copy;
         }
 
-        public static byte[] ConcatenateByteArrays(params byte[][] bytearrays) {
+        public static byte[] ConcatenateByteArrays(params byte[][] bytearrays)
+        {
             int totalLength = 0;
             for (int i = 0; i < bytearrays.Length; i++) totalLength += bytearrays[i].Length;
             byte[] rv = new byte[totalLength];
             int idx = 0;
-            for (int i = 0; i < bytearrays.Length; i++) {
+            for (int i = 0; i < bytearrays.Length; i++)
+            {
                 Array.Copy(bytearrays[i], 0, rv, idx, bytearrays[i].Length);
                 idx += bytearrays[i].Length;
             }

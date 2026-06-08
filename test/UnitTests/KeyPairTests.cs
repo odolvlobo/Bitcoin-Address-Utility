@@ -18,13 +18,16 @@
 using Casascius.Bitcoin;
 using Xunit;
 
-namespace BtcAddress.UnitTests {
+namespace BtcAddress.UnitTests
+{
 
     // Known-answer vectors for the priv-key -> address/WIF/pubkey path.
     // Ported from test/GoldenVectors so the same anchors run under `dotnet test`.
-    public class KeyPairTests {
+    public class KeyPairTests
+    {
 
-        static byte[] PrivKey(byte low) {
+        static byte[] PrivKey(byte low)
+        {
             byte[] b = new byte[32];
             b[31] = low;
             return b;
@@ -33,19 +36,22 @@ namespace BtcAddress.UnitTests {
         static string NoSpace(string s) => s?.Replace(" ", "");
 
         [Fact]
-        public void Priv0x01_Uncompressed_Address() {
+        public void Priv0x01_Uncompressed_Address()
+        {
             var kp = new KeyPair(PrivKey(0x01), compressed: false);
             Assert.Equal("1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm", kp.AddressBase58);
         }
 
         [Fact]
-        public void Priv0x01_Uncompressed_Wif() {
+        public void Priv0x01_Uncompressed_Wif()
+        {
             var kp = new KeyPair(PrivKey(0x01), compressed: false);
             Assert.Equal("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAnchuDf", kp.PrivateKeyBase58);
         }
 
         [Fact]
-        public void Priv0x01_Uncompressed_PubKey() {
+        public void Priv0x01_Uncompressed_PubKey()
+        {
             var kp = new KeyPair(PrivKey(0x01), compressed: false);
             Assert.Equal(
                 "0479BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798" +
@@ -54,19 +60,22 @@ namespace BtcAddress.UnitTests {
         }
 
         [Fact]
-        public void Priv0x01_Compressed_Address() {
+        public void Priv0x01_Compressed_Address()
+        {
             var kp = new KeyPair(PrivKey(0x01), compressed: true);
             Assert.Equal("1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH", kp.AddressBase58);
         }
 
         [Fact]
-        public void Priv0x01_Compressed_Wif() {
+        public void Priv0x01_Compressed_Wif()
+        {
             var kp = new KeyPair(PrivKey(0x01), compressed: true);
             Assert.Equal("KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn", kp.PrivateKeyBase58);
         }
 
         [Fact]
-        public void Priv0x01_Compressed_PubKey() {
+        public void Priv0x01_Compressed_PubKey()
+        {
             var kp = new KeyPair(PrivKey(0x01), compressed: true);
             Assert.Equal(
                 "0279BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798",
@@ -74,7 +83,8 @@ namespace BtcAddress.UnitTests {
         }
 
         [Fact]
-        public void Mini_KnownVector_ToPrivHex() {
+        public void Mini_KnownVector_ToPrivHex()
+        {
             var mini = new MiniKeyPair("S6c56bnXQiBjk9mqSYE7ykVQ7NzrRy");
             Assert.Equal(
                 "4C7A9640C72DC2099F23715D0C8A0D8A35F8906E3CAB61DD3F78B67BF887C9AB",
@@ -84,7 +94,8 @@ namespace BtcAddress.UnitTests {
         [Theory]
         [InlineData("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAnchuDf", "1EHNa6Q4Jz2uvNExL497mE43ikXhwF6kZm")]
         [InlineData("KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn", "1BgGZ9tcN4rm9KBzDn7KprQz87SZ26SAMH")]
-        public void Wif_RoundTrips_To_Address(string wif, string expectedAddress) {
+        public void Wif_RoundTrips_To_Address(string wif, string expectedAddress)
+        {
             var kp = new KeyPair(wif);
             Assert.Equal(expectedAddress, kp.AddressBase58);
         }

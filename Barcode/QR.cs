@@ -20,8 +20,10 @@ using System.Drawing;
 using System.Text.RegularExpressions;
 using QRCoder;
 
-namespace BtcAddress {
-    public class QR {
+namespace BtcAddress
+{
+    public class QR
+    {
 
         /// <summary>
         /// Encodes a QR code, making the best choice based on string length.
@@ -31,7 +33,8 @@ namespace BtcAddress {
         /// alphanumeric vs byte mode based on the payload, so a [0-9A-F] hex
         /// string still encodes in alphanumeric mode.
         /// </summary>
-        public static Bitmap EncodeQRCode(string what) {
+        public static Bitmap EncodeQRCode(string what)
+        {
             if (what == null || what == "") return null;
 
             // Determine if we can use alphanumeric encoding (e.g. public key hex)
@@ -46,24 +49,31 @@ namespace BtcAddress {
             // 34-char Bitcoin address) throw DataTooLongException.
             QRCodeGenerator.ECCLevel ecc;
 
-            if (IsAlphanumeric) {
+            if (IsAlphanumeric)
+            {
                 if (what.Length > 154) return null;
                 ecc = what.Length > 67 ? QRCodeGenerator.ECCLevel.L
                                        : QRCodeGenerator.ECCLevel.Q;
-            } else {
+            }
+            else
+            {
                 // Longest expected payload is a ~75-char confirmation code.
                 if (what.Length > 84) return null;
                 ecc = what.Length > 34 ? QRCodeGenerator.ECCLevel.M
                                        : QRCodeGenerator.ECCLevel.H;
             }
 
-            try {
+            try
+            {
                 using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
-                using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(what, ecc)) {
+                using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(what, ecc))
+                {
                     QRCode qrCode = new QRCode(qrCodeData);
                     return qrCode.GetGraphic(4);
                 }
-            } catch (QRCoder.Exceptions.DataTooLongException) {
+            }
+            catch (QRCoder.Exceptions.DataTooLongException)
+            {
                 // Preserve the original null-on-overlength contract.
                 return null;
             }

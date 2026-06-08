@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -21,17 +21,19 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Windows.Forms;
-using Org.BouncyCastle.Security;
-using System.Security.Cryptography;
 using System.Drawing.Printing;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Windows.Forms;
 using Casascius.Bitcoin;
+using Org.BouncyCastle.Security;
 
-namespace BtcAddress {
-    public partial class PaperWalletPrinter : Form {
+namespace BtcAddress
+{
+    public partial class PaperWalletPrinter : Form
+    {
 
         protected int CurrentSequence;
         protected string CurrentPassphrase;
@@ -43,26 +45,33 @@ namespace BtcAddress {
         protected bool CurrentSelectionPrinted = false;
         protected bool CurrentSelectionSaved = false;
 
-        public PaperWalletPrinter() {
+        public PaperWalletPrinter()
+        {
             InitializeComponent();
         }
 
-        private void rdoDeterministicWallet_CheckedChanged(object sender, EventArgs e) {
-            if (rdoDeterministicWallet.Checked) {
+        private void rdoDeterministicWallet_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdoDeterministicWallet.Checked)
+            {
                 lblInputDescription.Text = "Passphrase";
                 txtPassphrase.Text = GetUglyRandomString();
             }
         }
 
-        private void rdoRandomWallet_CheckedChanged(object sender, EventArgs e) {
-            if (rdoRandomWallet.Checked) {
+        private void rdoRandomWallet_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdoRandomWallet.Checked)
+            {
                 lblInputDescription.Text = "Enter some random text with your keyboard to add entropy.";
             }
         }
 
-        private string GetUglyRandomString() {
+        private string GetUglyRandomString()
+        {
             StringBuilder sb = new StringBuilder(128);
-            for (int i = 0; i < 64; i++) {
+            for (int i = 0; i < 64; i++)
+            {
                 SecureRandom sr = new SecureRandom();
                 int idx = sr.Next(0, 61);
                 sb.Append("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789".Substring(idx, 1));
@@ -71,58 +80,72 @@ namespace BtcAddress {
 
         }
 
-        private void LockButtons(bool locked) {
+        private void LockButtons(bool locked)
+        {
             btnSortKeys.Enabled = !locked;
             btnPrintWallet.Enabled = !locked;
         }
 
 
-        private void btnGenerateAddresses_Click(object sender, EventArgs e) {
-            if (CurrentlyGenerating == false) {
-                if (rdoRandomWallet.Checked) {
-                    if (txtPassphrase.Text.Length < 30) {
+        private void btnGenerateAddresses_Click(object sender, EventArgs e)
+        {
+            if (CurrentlyGenerating == false)
+            {
+                if (rdoRandomWallet.Checked)
+                {
+                    if (txtPassphrase.Text.Length < 30)
+                    {
                         MessageBox.Show("Please provide some random characters.  Just hit different keys on the keyboard until the box is full. " +
                             "This adds security to your paper wallet.", "", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                         return;
                     }
                 }
-                if (numGenCount.Value < 1) {
+                if (numGenCount.Value < 1)
+                {
                     MessageBox.Show("Enter the number of addresses to create.", "", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
                     return;
                 }
 
 
 
-                if (Addresses.Count > 0 && CurrentSelectionSaved==false && rdoDeterministicWallet.Checked==false) {
+                if (Addresses.Count > 0 && CurrentSelectionSaved == false && rdoDeterministicWallet.Checked == false)
+                {
 
                     string msg = "You have generated " + Addresses.Count + " addresses, which will be discarded if you continue.  Continue?";
-                        if (Addresses.Count == 1) msg = msg.Replace("addresses", "address");
+                    if (Addresses.Count == 1) msg = msg.Replace("addresses", "address");
 
                     if (MessageBox.Show(msg, "Continue with generation?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
 
                 }
 
-                if (rdoDeterministicWallet.Checked && txtPassphrase.Text == CurrentPassphrase) {
+                if (rdoDeterministicWallet.Checked && txtPassphrase.Text == CurrentPassphrase)
+                {
                     string msg = "You have not changed the passphrase since the last time you generated addresses, so you will be generating the same addresses as last time.  Continue?";
                     if (MessageBox.Show(msg, "Continue with generation?", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
 
-                } else {
+                }
+                else
+                {
                     CurrentSelectionSaved = false;
                     CurrentSelectionPrinted = false;
                 }
 
                 Addresses = new List<KeyCollectionItem>();
-                
+
 
                 lblGenCount.Text = Addresses.Count.ToString() + " addresses have been generated.";
 
                 TotalToGenerate = (int)numGenCount.Value;
                 CurrentSequence = 1;
 
-                if (rdoRandomWallet.Checked) {
+                if (rdoRandomWallet.Checked)
+                {
                     CurrentPassphrase = txtPassphrase.Text + GetUglyRandomString();
-                } else {
-                    if (txtPassphrase.Text.Length < 30) {
+                }
+                else
+                {
+                    if (txtPassphrase.Text.Length < 30)
+                    {
                         if (MessageBox.Show("Passphrases must be highly unique and very long to be secure against hackers, who try trillions of random passwords in hopes of " +
                             "finding coins to steal.  Use a Random Wallet if you are not 100% sure about what you're doing.  Continue?", "", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation)
                          == DialogResult.Cancel) return;
@@ -135,7 +158,9 @@ namespace BtcAddress {
                 btnGenerateAddresses.Text = "Stop generating";
                 timer1.Enabled = true;
 
-            } else {
+            }
+            else
+            {
                 CurrentlyGenerating = false;
                 LockButtons(false);
                 timer1.Enabled = false;
@@ -143,11 +168,13 @@ namespace BtcAddress {
             }
         }
 
-        private void timer1_Tick(object sender, EventArgs e) {
+        private void timer1_Tick(object sender, EventArgs e)
+        {
             if (CurrentlyGenerating == false) return;
-            if (CurrentSequence >= TotalToGenerate) {
+            if (CurrentSequence >= TotalToGenerate)
+            {
                 CurrentlyGenerating = false;
-                LockButtons( false);
+                LockButtons(false);
                 timer1.Enabled = false;
                 btnGenerateAddresses.Text = "Generate addresses";
             }
@@ -155,9 +182,12 @@ namespace BtcAddress {
             string myhash = CurrentPassphrase + ((int)CurrentSequence).ToString();
 
             KeyPair k;
-            if (chkMiniKeys.Checked) {
+            if (chkMiniKeys.Checked)
+            {
                 k = MiniKeyPair.CreateDeterministic(myhash);
-            } else {
+            }
+            else
+            {
                 byte[] mykey = Util.ComputeSha256(myhash);
             }
             lblGenCount.Text = Addresses.Count.ToString() + " addresses have been generated.";
@@ -165,24 +195,28 @@ namespace BtcAddress {
 
         }
 
-        private void btnPrintWallet_Click(object sender, EventArgs e) {
-            if (Addresses.Count == 0) {
+        private void btnPrintWallet_Click(object sender, EventArgs e)
+        {
+            if (Addresses.Count == 0)
+            {
                 MessageBox.Show("Please generate some addresses before trying to print.");
                 return;
             }
 
-            if (CurrentSelectionPrinted) {
+            if (CurrentSelectionPrinted)
+            {
                 string msg = "You have already printed these addresses before.  Print again?";
                 if (MessageBox.Show(msg, "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
             }
 
 
             PrintDialog pd = new PrintDialog();
-            PrinterSettings  ps = new PrinterSettings();
+            PrinterSettings ps = new PrinterSettings();
             pd.PrinterSettings = ps;
             DialogResult dr = pd.ShowDialog();
 
-            if (dr == DialogResult.OK) {
+            if (dr == DialogResult.OK)
+            {
                 QRPrint printer = new QRPrint();
                 if (this.rdoWalletPrivQR.Checked) printer.PrintMode = QRPrint.PrintModes.PrivQR;
                 if (this.rdoWalletPubPrivQR.Checked) printer.PrintMode = QRPrint.PrintModes.PubPrivQR;

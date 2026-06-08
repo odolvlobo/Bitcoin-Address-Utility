@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -21,28 +21,33 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
-using System.Security.Cryptography;
-using PC;
-using System.Drawing.Printing;
 using Casascius.Bitcoin;
+using PC;
 
 
-namespace BtcAddress {
-    public partial class Walletgen : Form {
-        public Walletgen() {
+namespace BtcAddress
+{
+    public partial class Walletgen : Form
+    {
+        public Walletgen()
+        {
             InitializeComponent();
         }
 
-        private void button1_Click(object sender, EventArgs e) {
+        private void button1_Click(object sender, EventArgs e)
+        {
             if (button1.Enabled)
             {
                 int n = 0;
 
                 if (Int32.TryParse(textBox2.Text, out n) == false) n = 0;
-                if (n < 1 || n > 9999) {                
+                if (n < 1 || n > 9999)
+                {
                     MessageBox.Show("Please enter a number of addresses between 1 and 9999", "Invalid entry");
                     return;
                 }
@@ -72,12 +77,13 @@ namespace BtcAddress {
 
                 StringBuilder wallet = new StringBuilder();
 
-                
+
                 bool CSVmode = cboOutputType.Text.Contains("CSV");
                 bool ScriptMode = cboOutputType.Text.Contains("Import script");
                 bool ShowHelpText = cboOutputType.Text.Contains("Normal");
 
-                if (ShowHelpText) {
+                if (ShowHelpText)
+                {
                     wallet.AppendLine("Paper Bitcoin Wallet.  Keep private, do not lose, do not allow anyone to make a copy.  Anyone with the passphrase or private keys can steal your funds.\r\n");
 
                     wallet.AppendLine("Passphrase was:");
@@ -96,7 +102,8 @@ namespace BtcAddress {
                     Application.DoEvents();
 
                     string privatestring;
-                    switch (GenerationFormula) {
+                    switch (GenerationFormula)
+                    {
                         case 1:
                             privatestring = txtPassphrase.Text + i.ToString();
                             break;
@@ -113,11 +120,16 @@ namespace BtcAddress {
                     string PubHex = kp.PublicKeyHex;
                     string Address = kp.AddressBase58;
 
-                    if (CSVmode) {
+                    if (CSVmode)
+                    {
                         wallet.AppendFormat("{0},\"{1}\",\"{2}\"\r\n", i, Address, PrivWIF);
-                    } else if (ScriptMode) {
-                        wallet.AppendFormat("# {0}: {1}\"\r\n./bitcoind importprivkey {2}\r\n", i, Address, PrivWIF);                                            
-                    } else {
+                    }
+                    else if (ScriptMode)
+                    {
+                        wallet.AppendFormat("# {0}: {1}\"\r\n./bitcoind importprivkey {2}\r\n", i, Address, PrivWIF);
+                    }
+                    else
+                    {
                         wallet.AppendFormat("Bitcoin Address #{0}: {1}\r\n", i, Address);
                         wallet.AppendFormat("Private Key: {0}\r\n\r\n", PrivWIF);
                     }
@@ -134,7 +146,8 @@ namespace BtcAddress {
             }
         }
 
-        private void Walletgen_Shown(object sender, EventArgs e) {
+        private void Walletgen_Shown(object sender, EventArgs e)
+        {
             const int phraselength = 80;
 
             RandomNumberGenerator rng = RandomNumberGenerator.Create();
@@ -142,7 +155,8 @@ namespace BtcAddress {
             rng.GetBytes(byte8);
             string randomphrase = "";
             string junk64 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz*#_%+!";
-            for (int i = 0; i < phraselength; i++) {
+            for (int i = 0; i < phraselength; i++)
+            {
                 randomphrase += junk64.Substring(byte8[i] & 63, 1);
             }
             txtPassphrase.Text = randomphrase;
@@ -171,9 +185,10 @@ namespace BtcAddress {
         private int GenerationFormula = 1;
 
 
-        private void lblFormula_DoubleClick(object sender, EventArgs e) {
+        private void lblFormula_DoubleClick(object sender, EventArgs e)
+        {
             // Change formula upon double click
-            GenerationFormula = 0; 
+            GenerationFormula = 0;
             lblFormula.Text = "Generation formula: PrivKey = SHA256(n + \"/\" + passphrase + \"/\" + n + \"/BITCOIN) where n = \"1\" thru \"10\"";
 
         }
