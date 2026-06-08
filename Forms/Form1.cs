@@ -500,7 +500,6 @@ namespace BtcAddress {
 
 
             SecureRandom sr = new SecureRandom();
-            int dec = 0;
 
             List<string> myaddresses = new List<string>();
             Dictionary<string, string> myprivkeys = new Dictionary<string, string>();
@@ -565,57 +564,9 @@ namespace BtcAddress {
         }
 
         private void label4_Click(object sender, EventArgs e) {
-            return;
-            int Records=0;
-            int LineNumber = 1;
-            using (StreamReader sr1 = new StreamReader("privkeys3.txt")) {
-                while (sr1.EndOfStream == false) {
-                    string line = sr1.ReadLine();
-                    LineNumber++;
-                    line = line.Replace("\"", "");
-                    string[] fields = line.Split(',');
-                    if (fields.Length == 3) {
-                        byte[] privkey = Util.ComputeSha256(fields[1]);
-
-                        string pubhex = Util.PrivHexToPubHex(Util.ByteArrayToString(privkey)).Replace(" ", "");
-                        string pubhash = Util.PubHexToPubHash(pubhex);
-                        string address = Util.PubHashToAddress(pubhash, "Bitcoin");
-
-                        if (address != fields[0] || pubhex != fields[2]) {
-                            MessageBox.Show("Validation failure on line " + LineNumber.ToString());
-                        }
-                        Records++;
-                        if (Records % 100 == 0) Debug.WriteLine("Records: " + Records);
-                    }
-                }
-            }
-            MessageBox.Show("Successfully validated " + Records + " records.");
         }
 
         private void label3_Click(object sender, EventArgs e) {
-            return;
-            
-
-
-            
-            // * CODE TO BREAK PRIVATE KEYS OUT OF WALLET.DAT
-            using (FileStream sr = new FileStream("wallet.dat",FileMode.Open)) {
-                byte[] b = new byte[4000000];
-                int len = sr.Read(b, 0, b.Length);
-                sr.Close();
-
-                for (int i = 0; i < len - 34; i++) {
-                    if (b[i] == 4 && b[i + 1] == 0x20) {
-                        byte[] privkey = new byte[33];
-                        privkey[0] = 0x80;
-                        for (int j = 0; j < 32; j++) {
-                            privkey[j+1] = b[i + j + 2];
-                        }
-                        Debug.WriteLine("./bitcoind importprivkey " + Util.ByteArrayToBase58Check(privkey));
-                    }
-                }
-            }
-             
         }
 
 

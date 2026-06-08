@@ -19,17 +19,21 @@ dotnet build BtcAddress.csproj -c Release
 
 - Single-file self-contained exe (runs on a clean Windows): `dotnet publish BtcAddress.csproj -r win-x64 -c Release -p:PublishSingleFile=true --self-contained true` → `bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe`.
 - Entry point: `Program.Main` launches `BtcAddress.Forms.KeyCollectionView` (NOT `Form1`).
-- **No lint, no CI.** The only automated check is the golden-vector crypto harness (see below).
+- **No lint, no CI.** The automated checks are two xUnit test projects under `test/` (both excluded from the app's compile glob via `<Compile Remove="test\**" />`): `UnitTests` (model/util unit tests) and `GoldenVectors` (crypto known-answer harness, see below). Run all:
+
+```powershell
+dotnet test BtcAddress.sln
+```
 
 ### Crypto validation harness
 
-`test/GoldenVectors/` is a separate console project (excluded from the app's compile glob via `<Compile Remove="test\**" />`). It anchors crypto output to public known-answer vectors (priv key `0x01`, BIP38 spec, mini key, Base58Check) plus round-trip self-consistency (M-of-N, escrow). Run after **any** change to crypto/keygen paths:
+`test/GoldenVectors/` is a separate **xUnit test project** (was a standalone console app pre-migration; kept as its own assembly so it stays the dedicated crypto release gate). It anchors crypto output to public known-answer vectors (priv key `0x01`, BIP38 spec, mini key, Base58Check) plus round-trip self-consistency (M-of-N, escrow) and QR boundary-length encoding. Runs automatically under `dotnet test`; run **after any change to crypto/keygen paths**. Isolate it with:
 
 ```powershell
-dotnet run --project test/GoldenVectors/GoldenVectors.csproj -c Release
+dotnet test test/GoldenVectors/GoldenVectors.csproj
 ```
 
-Exit code = number of failing vectors (0 = `ALL VECTORS PASSED`). Details: `test/golden-vectors.md`.
+Green = all vectors pass. Details: `test/golden-vectors.md`.
 
 ## Architecture
 

@@ -87,10 +87,10 @@ namespace BtcAddress {
 
         }
 
-        public static List<equation> solvesome(List<equation> ineq) {
+        public static List<Equation> solvesome(List<Equation> ineq) {
             if (ineq.Count == 1) return ineq;
 
-            List<equation> outeq = new List<equation>();
+            List<Equation> outeq = new List<Equation>();
 
             for (int i = 1; i < ineq.Count; i++) {
                 outeq.Add(ineq[i].CombineAndReduce(ineq[0]));
