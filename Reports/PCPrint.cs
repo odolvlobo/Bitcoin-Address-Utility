@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -78,6 +79,7 @@ namespace PC
         /// <value></value>
         /// <returns>A string</returns>
         /// <remarks></remarks>
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
         public string TextToPrint
         {
             get { return _text; }
@@ -90,6 +92,7 @@ namespace PC
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
+        [System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)]
         public Font PrinterFont
         {
             // Allows the user to override the default font

@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -99,12 +100,15 @@ namespace Casascius.Bitcoin {
             BigInteger yi = new BigInteger(1, y);
 
             ECPoint Gx = kx.GetECPoint();
-            byte[] bytesGx = Gx.GetEncoded();
+            // BouncyCastle 2.x: GetEncoded() now defaults to uncompressed. Gx/Gy are
+            // stored in 33-byte (compressed) slots; Gxy is hashed and historically
+            // used the uncompressed form (a 1.x Multiply() result).
+            byte[] bytesGx = Gx.GetEncoded(true);
             ECPoint Gy = ky.GetECPoint();
-            byte[] bytesGy = Gy.GetEncoded();
+            byte[] bytesGy = Gy.GetEncoded(true);
             ECPoint Gxy = Gx.Multiply(yi);
 
-            byte[] bytesGxy = Gxy.GetEncoded();
+            byte[] bytesGxy = Gxy.GetEncoded(false);
             Sha256Digest sha256 = new Sha256Digest();
             byte[] hashGxy = new byte[32];
             sha256.BlockUpdate(bytesGxy, 0, bytesGxy.Length);
@@ -174,12 +178,8 @@ namespace Casascius.Bitcoin {
             PublicKey pk = new PublicKey(pubpart);
             ECPoint Gxyz = pk.GetECPoint().Multiply(new BigInteger(1, privpart)).Multiply(new BigInteger(1, z));
 
-       
-            // Uncompress it
-            Gxyz = PublicKey.GetUncompressed(Gxyz);
-
-            // We can get the Bitcoin address now, so do so
-            PublicKey pkxyz = new PublicKey(Gxyz);           
+            // We can get the Bitcoin address now, so do so (uncompressed encoding).
+            PublicKey pkxyz = new PublicKey(Gxyz.GetEncoded(false));
             byte[] hash160 = pkxyz.Hash160;
             BitcoinAddress = new AddressBase(hash160, networkByte).AddressBase58;
             
@@ -261,11 +261,11 @@ namespace Casascius.Bitcoin {
             // get bitcoin address
             PublicKey pk = new PublicKey(pubpart);
             ECPoint Gxyz = pk.GetECPoint().Multiply(new BigInteger(1, privpart)).Multiply(new BigInteger(1, privpartz));
-            // uncompress if compress is not indicated
-            if (compressedFlag == false) Gxyz = PublicKey.GetUncompressed(Gxyz);
 
-            // We can get the Bitcoin address now, so do so
-            PublicKey pkxyz = new PublicKey(Gxyz);
+            // We can get the Bitcoin address now, so do so. The payment address is
+            // always derived from the uncompressed point (matching the create side,
+            // which uncompressed Gxyz before hashing).
+            PublicKey pkxyz = new PublicKey(Gxyz.GetEncoded(false));
             byte[] addrhash160 = pkxyz.Hash160;
             BitcoinAddress = new AddressBase(addrhash160, networkByte).AddressBase58;
 
@@ -378,7 +378,7 @@ namespace Casascius.Bitcoin {
             }
             accbytes[8]=networkbyte;
 
-            byte[] Gzbytes = new KeyPair(z, true).GetECPoint().GetEncoded();
+            byte[] Gzbytes = new KeyPair(z, true).GetECPoint().GetEncoded(true);
             Array.Copy(Gzbytes, 0, accbytes, 8+1, 33);
             Array.Copy(hash160, 0, accbytes, 8+1+33, 20);
             accbytes[8+1+33+20] = flagbyte;

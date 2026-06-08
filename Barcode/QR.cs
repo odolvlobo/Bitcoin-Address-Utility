@@ -1,26 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+// Bitcoin Address Utility
+// Copyright (C) 2012 Mike Caldwell
+// Copyright (C) 2026 odolvlobo
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+using System;
 using System.Drawing;
-using System.Security.Cryptography;
-using System.IO;
-using Org.BouncyCastle.Asn1;
-using Org.BouncyCastle.Crypto;
-using Org.BouncyCastle.Crypto.Digests;
-using Org.BouncyCastle.Crypto.Generators;
-using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Math.EC;
-using ThoughtWorks.QRCode.Codec;
 using System.Text.RegularExpressions;
+using QRCoder;
 
 namespace BtcAddress {
     public class QR {
 
         /// <summary>
-        /// Encodes a QR code, making the best choice based on string length
-        /// (apparently not provided by QR lib?)
+        /// Encodes a QR code, making the best choice based on string length.
+        /// Version/ECC selection and null-on-overlength behavior are preserved
+        /// from the original ThoughtWorks.QRCode implementation; only the
+        /// underlying encoder changed (QRCoder). QRCoder auto-selects
+        /// alphanumeric vs byte mode based on the payload, so a [0-9A-F] hex
+        /// string still encodes in alphanumeric mode.
         /// </summary>
         public static Bitmap EncodeQRCode(string what) {
             if (what == null || what == "") return null;
@@ -29,44 +38,35 @@ namespace BtcAddress {
             Regex r = new Regex("^[0-9A-F]{63,154}$");
             bool IsAlphanumeric = r.IsMatch(what);
 
-            QRCodeEncoder qr = new QRCodeEncoder();
+            // Pick the error-correction level by payload length (denser ECC for
+            // short payloads, lighter ECC as they grow), matching the original
+            // intent. The QR *version* is left to QRCoder, which auto-selects the
+            // smallest version that fits the payload at the chosen ECC level --
+            // pinning a fixed version made boundary-length payloads (e.g. a
+            // 34-char Bitcoin address) throw DataTooLongException.
+            QRCodeGenerator.ECCLevel ecc;
+
             if (IsAlphanumeric) {
-                qr.QRCodeEncodeMode = QRCodeEncoder.ENCODE_MODE.ALPHA_NUMERIC;
-                if (what.Length > 154) {
-                    return null;
-                } else if (what.Length > 67) {
-                    // 5L is good to 154 alphanumeric characters
-                    qr.QRCodeVersion = 5;
-                    qr.QRCodeErrorCorrect = QRCodeEncoder.ERROR_CORRECTION.L;
-                } else {
-                    // 4Q is good to 67 alphanumeric characters
-                    qr.QRCodeVersion = 4;
-                    qr.QRCodeErrorCorrect = QRCodeEncoder.ERROR_CORRECTION.Q;
-                }
+                if (what.Length > 154) return null;
+                ecc = what.Length > 67 ? QRCodeGenerator.ECCLevel.L
+                                       : QRCodeGenerator.ECCLevel.Q;
             } else {
-                if (what.Length > 84) {
-                    // We don't intend to encode any alphanumeric strings longer than confirmation codes at 75 characters
-                    return null;
-                } else if (what.Length > 62) {
-                    // 5M is good to 84 characters
-                    qr.QRCodeVersion = 5;
-                    qr.QRCodeErrorCorrect = QRCodeEncoder.ERROR_CORRECTION.M;
-                } else if (what.Length > 34) {
-                    // 4M is good to 62 characters
-                    qr.QRCodeVersion = 4;
-                    qr.QRCodeErrorCorrect = QRCodeEncoder.ERROR_CORRECTION.M;
-                } else if (what.Length > 32) {
-                    // 4H is good to 34 characters
-                    qr.QRCodeVersion = 4;
-                    qr.QRCodeErrorCorrect = QRCodeEncoder.ERROR_CORRECTION.H;
-                } else {
-                    // 3Q is good to 32 characters
-                    qr.QRCodeVersion = 3;
-                    qr.QRCodeErrorCorrect = QRCodeEncoder.ERROR_CORRECTION.Q;
-                }
+                // Longest expected payload is a ~75-char confirmation code.
+                if (what.Length > 84) return null;
+                ecc = what.Length > 34 ? QRCodeGenerator.ECCLevel.M
+                                       : QRCodeGenerator.ECCLevel.H;
             }
 
-            return qr.Encode(what);
+            try {
+                using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
+                using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(what, ecc)) {
+                    QRCode qrCode = new QRCode(qrCodeData);
+                    return qrCode.GetGraphic(4);
+                }
+            } catch (QRCoder.Exceptions.DataTooLongException) {
+                // Preserve the original null-on-overlength contract.
+                return null;
+            }
         }
 
     }

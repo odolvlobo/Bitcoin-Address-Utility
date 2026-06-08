@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -40,9 +41,13 @@ namespace Casascius.Bitcoin {
         protected PublicKey() { }
 
         public PublicKey(ECPoint point) {
-            this.IsCompressedPoint = point.IsCompressed;
+            // BouncyCastle 2.x points no longer carry a compression flag. This
+            // constructor historically produced an uncompressed encoding (its only
+            // callers pass Multiply() results, which encoded uncompressed in 1.x).
+            point = point.Normalize();
+            this.IsCompressedPoint = false;
             this.point = point;
-            this.PublicKeyBytes = point.GetEncoded();
+            this.PublicKeyBytes = point.GetEncoded(false);
             if (validatePoint() == false) throw new ArgumentException("Not a valid public key");
         }
 
@@ -105,9 +110,12 @@ namespace Casascius.Bitcoin {
         /// </summary>
         private bool validatePoint() {
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
-            var y2 = point.Y.Multiply(point.Y);
-            var x3 = point.X.Multiply(point.X).Multiply(point.X);
-            var ax = point.X.Multiply(ps.Curve.A);
+            var p = point.Normalize();
+            var x = p.AffineXCoord;
+            var y = p.AffineYCoord;
+            var y2 = y.Multiply(y);
+            var x3 = x.Multiply(x).Multiply(x);
+            var ax = x.Multiply(ps.Curve.A);
             var x3axb = x3.Add(ax).Add(ps.Curve.B);
             return y2.Equals(x3axb);
         }
@@ -162,19 +170,10 @@ namespace Casascius.Bitcoin {
         private byte[] getReencoded(bool compressed) {
             byte[] pubKeyBytes = PublicKeyBytes;
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
-            point = ps.Curve.DecodePoint(pubKeyBytes);
-            var point2 = ps.Curve.CreatePoint(point.X.ToBigInteger(), point.Y.ToBigInteger(), compressed);
-            return point2.GetEncoded();
-        }
-
-        public static ECPoint GetUncompressed(ECPoint point) {
-            var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
-            return ps.Curve.CreatePoint(point.X.ToBigInteger(), point.Y.ToBigInteger(), false);
-        }
-
-        public static ECPoint GetCompressed(ECPoint point) {
-            var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
-            return ps.Curve.CreatePoint(point.X.ToBigInteger(), point.Y.ToBigInteger(), true);
+            // BouncyCastle 2.x: compression is chosen at encode time, not stored on
+            // the point.
+            point = ps.Curve.DecodePoint(pubKeyBytes).Normalize();
+            return point.GetEncoded(compressed);
         }
 
 
@@ -183,8 +182,12 @@ namespace Casascius.Bitcoin {
         /// </summary>
         protected override byte[] ComputeHash160() {
             byte[] shaofpubkey = Util.ComputeSha256(PublicKeyBytes);
-            RIPEMD160 rip = System.Security.Cryptography.RIPEMD160.Create();
-            return rip.ComputeHash(shaofpubkey);
+            // .NET 8+ removed System.Security.Cryptography.RIPEMD160; use BouncyCastle.
+            RipeMD160Digest rip = new RipeMD160Digest();
+            rip.BlockUpdate(shaofpubkey, 0, shaofpubkey.Length);
+            byte[] result = new byte[rip.GetDigestSize()];
+            rip.DoFinal(result, 0);
+            return result;
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
 ﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
 // Bitcoin Address Utility is free software: you can redistribute it and/or modify
@@ -20,7 +21,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Drawing;
-using ThoughtWorks.QRCode.Codec;
 using System.Security.Cryptography;
 using System.IO;
 using System.Diagnostics;
@@ -286,10 +286,7 @@ namespace BtcAddress {
                     // ----------------------------------------------------------------
 
                     e.Graphics.DrawImage(b, thiscodeX + 600, thiscodeY, 100, 100);
-                    QRCodeEncoder qr2 = new QRCodeEncoder();
-                    qr2.QRCodeVersion = 3;
-
-                    Bitmap b2 = qr2.Encode(k.GetAddressBase58());
+                    Bitmap b2 = QR.EncodeQRCode(k.GetAddressBase58());
                     e.Graphics.DrawImage(b2, thiscodeX, thiscodeY, 100, 100);
 
                     e.Graphics.DrawString("Bitcoin address:\r\n" + k.GetAddressBase58(), font, Brushes.Black, thiscodeX + 110, thiscodeY);
