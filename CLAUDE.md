@@ -19,10 +19,18 @@ dotnet build BtcAddress.csproj -c Release
 
 - Single-file self-contained exe (runs on a clean Windows): `dotnet publish BtcAddress.csproj -r win-x64 -c Release -p:PublishSingleFile=true --self-contained true` → `bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe`.
 - Entry point: `Program.Main` launches `BtcAddress.Forms.KeyCollectionView` (NOT `Form1`).
-- **No lint, no CI.** The automated checks are two xUnit test projects under `test/` (both excluded from the app's compile glob via `<Compile Remove="test\**" />`): `UnitTests` (model/util unit tests) and `GoldenVectors` (crypto known-answer harness, see below). Run all:
+- The automated checks are two xUnit test projects under `test/` (both excluded from the app's compile glob via `<Compile Remove="test\**" />`): `UnitTests` (model/util unit tests) and `GoldenVectors` (crypto known-answer harness, see below). Run all:
 
 ```powershell
 dotnet test BtcAddress.sln
+```
+
+- **CI:** GitHub Actions workflow `.github/workflows/ci.yml` runs on `windows-latest` (WinForms is Windows-only). Triggers: push to `master`/`develop`/`release/**` and all pull requests. Jobs: `build` + `test` on every trigger; `format` (`dotnet format whitespace --verify-no-changes`) and `lint` (`dotnet format style` + `analyzers --verify-no-changes`) on pull requests only. Format/lint rules come from `.editorconfig`; all jobs fail on problems. Run the gate locally before a PR:
+
+```powershell
+dotnet format whitespace BtcAddress.sln --verify-no-changes
+dotnet format style BtcAddress.sln --verify-no-changes
+dotnet format analyzers BtcAddress.sln --verify-no-changes
 ```
 
 ### Crypto validation harness
@@ -84,6 +92,7 @@ Bip38Base
 
 - Address type is carried as a leading byte on the Hash160 (e.g. 0 = Bitcoin mainnet); `AddressBase` accepts 20 bytes (hash only) or 21 bytes (type + hash).
 - When adding key formats or address types, route through `Util` and `StringInterpreter` rather than duplicating Base58/EC logic in forms.
+- **File encoding:** `*.cs` is UTF-8 **without** BOM, CI-enforced via `.editorconfig` (`charset = utf-8` under `[*.cs]`; `dotnet format whitespace` fails on a BOM). Generated `*.Designer.cs` and `*.resx` are excluded by the formatter and keep their existing BOMs — leave those alone (the VS designer rewrites `.Designer.cs` with a BOM anyway, and `.resx` XML expects one). For any other new file, prefer UTF-8 without BOM unless a BOM is genuinely needed (real UTF-16/UTF-32, a legacy Windows tool that sniffs BOM, Excel-targeted CSV).
 
 ## Migration status
 

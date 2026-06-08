@@ -1,5 +1,8 @@
 # Bitcoin Address Utility
 
+[![CI](https://github.com/odolvlobo/Bitcoin-Address-Utility/actions/workflows/ci.yml/badge.svg)](https://github.com/odolvlobo/Bitcoin-Address-Utility/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/odolvlobo/Bitcoin-Address-Utility/branch/master/graph/badge.svg)](https://codecov.io/gh/odolvlobo/Bitcoin-Address-Utility)
+
 A Windows desktop tool for generating and manipulating Bitcoin keys and
 addresses — paper wallets, BIP38-encrypted keys, Casascius mini private keys,
 M-of-N split keys, and escrow codes. Originally by Mike Caldwell (Casascius).
