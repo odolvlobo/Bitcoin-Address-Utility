@@ -160,6 +160,21 @@ static class Program {
             CheckTrue("Escrow round-trip (threw: " + ex.Message + ")", false);
         }
 
+        // --- QR encode: must size the version to the payload, not throw --------
+        // Regression guard: a fixed QR version made boundary-length payloads
+        // (34-char address, 58-char BIP38 key, ~75-char confirmation code) throw
+        // DataTooLongException. Each must now produce a bitmap.
+        try {
+            CheckTrue("QR address (34-char)", QrOk("1BitcoinEaterAddressDontSendf59kuE"));
+            CheckTrue("QR pubkey hex uncompressed (130)", QrOk(NoSpace(kpU.PublicKeyHex)));
+            CheckTrue("QR pubkey hex compressed (66)", QrOk(NoSpace(kpC.PublicKeyHex)));
+            CheckTrue("QR BIP38 key (58)", QrOk("6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg"));
+            // Long mixed-case Base58 (byte mode), confirmation-code shaped.
+            CheckTrue("QR confirmation-length", QrOk("cfrm38V8a9b2c3d4e5f6g7h8j9k1m2n3p4q5r6s7t8u9v1w2x3y4z5A6B7C8D9E1F2"));
+        } catch (Exception ex) {
+            CheckTrue("QR encode (threw: " + ex.Message + ")", false);
+        }
+
         Console.WriteLine();
         Console.WriteLine(failures == 0 ? "ALL VECTORS PASSED" : (failures + " FAILURE(S)"));
         return failures == 0 ? 0 : 1;
@@ -171,6 +186,10 @@ static class Program {
         m.AddKeyPart(p2);
         m.Decode();
         return m.Decoded ? m.BitcoinAddress : null;
+    }
+
+    static bool QrOk(string s) {
+        using (var bmp = BtcAddress.QR.EncodeQRCode(s)) return bmp != null;
     }
 
     static bool ByteEq(byte[] x, byte[] y) {

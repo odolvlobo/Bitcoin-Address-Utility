@@ -38,48 +38,34 @@ namespace BtcAddress {
             Regex r = new Regex("^[0-9A-F]{63,154}$");
             bool IsAlphanumeric = r.IsMatch(what);
 
-            int version;
+            // Pick the error-correction level by payload length (denser ECC for
+            // short payloads, lighter ECC as they grow), matching the original
+            // intent. The QR *version* is left to QRCoder, which auto-selects the
+            // smallest version that fits the payload at the chosen ECC level --
+            // pinning a fixed version made boundary-length payloads (e.g. a
+            // 34-char Bitcoin address) throw DataTooLongException.
             QRCodeGenerator.ECCLevel ecc;
 
             if (IsAlphanumeric) {
-                if (what.Length > 154) {
-                    return null;
-                } else if (what.Length > 67) {
-                    // 5L is good to 154 alphanumeric characters
-                    version = 5;
-                    ecc = QRCodeGenerator.ECCLevel.L;
-                } else {
-                    // 4Q is good to 67 alphanumeric characters
-                    version = 4;
-                    ecc = QRCodeGenerator.ECCLevel.Q;
-                }
+                if (what.Length > 154) return null;
+                ecc = what.Length > 67 ? QRCodeGenerator.ECCLevel.L
+                                       : QRCodeGenerator.ECCLevel.Q;
             } else {
-                if (what.Length > 84) {
-                    // We don't intend to encode any alphanumeric strings longer than confirmation codes at 75 characters
-                    return null;
-                } else if (what.Length > 62) {
-                    // 5M is good to 84 characters
-                    version = 5;
-                    ecc = QRCodeGenerator.ECCLevel.M;
-                } else if (what.Length > 34) {
-                    // 4M is good to 62 characters
-                    version = 4;
-                    ecc = QRCodeGenerator.ECCLevel.M;
-                } else if (what.Length > 32) {
-                    // 4H is good to 34 characters
-                    version = 4;
-                    ecc = QRCodeGenerator.ECCLevel.H;
-                } else {
-                    // 3Q is good to 32 characters
-                    version = 3;
-                    ecc = QRCodeGenerator.ECCLevel.Q;
-                }
+                // Longest expected payload is a ~75-char confirmation code.
+                if (what.Length > 84) return null;
+                ecc = what.Length > 34 ? QRCodeGenerator.ECCLevel.M
+                                       : QRCodeGenerator.ECCLevel.H;
             }
 
-            using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
-            using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(what, ecc, false, false, QRCodeGenerator.EciMode.Default, version)) {
-                QRCode qrCode = new QRCode(qrCodeData);
-                return qrCode.GetGraphic(4);
+            try {
+                using (QRCodeGenerator qrGenerator = new QRCodeGenerator())
+                using (QRCodeData qrCodeData = qrGenerator.CreateQrCode(what, ecc)) {
+                    QRCode qrCode = new QRCode(qrCodeData);
+                    return qrCode.GetGraphic(4);
+                }
+            } catch (QRCoder.Exceptions.DataTooLongException) {
+                // Preserve the original null-on-overlength contract.
+                return null;
             }
         }
 
