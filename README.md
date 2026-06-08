@@ -65,8 +65,9 @@ maintainer workflow are in [SIGNING.md](SIGNING.md).
 
 Crypto output is checked against published known-answer vectors (private key
 `0x01`, BIP38 spec vectors, mini key, Base58Check, M-of-N, escrow). See
-[test/golden-vectors.md](test/golden-vectors.md). Run the harness with:
+[test/golden-vectors.md](test/golden-vectors.md). The harness is an xUnit project;
+run the full test suite (unit tests + golden vectors) with:
 
 ```powershell
-dotnet run --project test/GoldenVectors/GoldenVectors.csproj -c Release
+dotnet test BtcAddress.sln
 ```

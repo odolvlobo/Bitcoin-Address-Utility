@@ -243,25 +243,25 @@ namespace Casascius.Bitcoin {
             }
 
 
-            List<equation> equations = new List<equation>();
+            List<Equation> equations = new List<Equation>();
 
             // create equations for all the parts we need.
             for (int i = 0; i < PartsNeeded; i++) {
                 byte[] got = decodedKeyParts[i];
                 // extract out part number
                 int partnumber0 = (byte)((got[2] & 0x0e) >> 1);
-                equations.Add(new equation(i, PartsNeeded, partnumber0));
+                equations.Add(new Equation(i, PartsNeeded, partnumber0));
             }
 
-            List<List<equation>> steps = new List<List<equation>>();
+            List<List<Equation>> steps = new List<List<Equation>>();
             steps.Add(equations);
 
-            // goal: get our equation set down such that there's only one coefficient on the left side.
+            // goal: get our Equation set down such that there's only one Coefficient on the left side.
             while (equations.Count > 1) {
                 equations = solvesome(equations);
                 steps.Add(equations);
                 Debug.WriteLine("-----");
-                foreach (equation eq in equations) {
+                foreach (Equation eq in equations) {
                     Debug.WriteLine(eq.ToString());
                 }
             }
@@ -270,9 +270,9 @@ namespace Casascius.Bitcoin {
 
             while (steps.Count > 0) {
                 // pop off the last step
-                List<equation> laststeps = steps[steps.Count - 1];
+                List<Equation> laststeps = steps[steps.Count - 1];
                 steps.RemoveAt(steps.Count - 1);
-                equation laststep = laststeps[0];
+                Equation laststep = laststeps[0];
                 Debug.WriteLine("-----");
                 Debug.WriteLine(laststep.ToString());
 
@@ -280,7 +280,7 @@ namespace Casascius.Bitcoin {
                 long divisor = laststep.leftside[0].multiplier;
                 laststep.divisor = laststep.leftside[0].multiplier;
                 laststep.leftside[0].multiplier = 1;
-                //foreach (coefficient c in laststep.rightside) c.divisor = divisor;
+                //foreach (Coefficient c in laststep.rightside) c.divisor = divisor;
                 //laststep.subtractor = laststep.subtractor.Divide(new BigInteger(divisor.ToString()));
 
 
@@ -288,9 +288,9 @@ namespace Casascius.Bitcoin {
                 long idx = laststep.leftside[0].vindex;
                 v[idx] = laststep.SolveRight(pc);
                 Debug.WriteLine(String.Format("v({0})={1}", laststep.leftside[0].vindex, v[idx].ToString()));
-                // go through all other steps and see that our solved value is incorporated into the equation.
-                foreach (List<equation> eqbl in steps) {
-                    foreach (equation eqb in eqbl) eqb.SolveLeft(v);
+                // go through all other steps and see that our solved value is incorporated into the Equation.
+                foreach (List<Equation> eqbl in steps) {
+                    foreach (Equation eqb in eqbl) eqb.SolveLeft(v);
                 }
 
             }
@@ -392,10 +392,10 @@ namespace Casascius.Bitcoin {
         }
 
 
-        private static List<equation> solvesome(List<equation> ineq) {
+        private static List<Equation> solvesome(List<Equation> ineq) {
             if (ineq.Count == 1) return ineq;
 
-            List<equation> outeq = new List<equation>();
+            List<Equation> outeq = new List<Equation>();
 
             for (int i = 1; i < ineq.Count; i++) {
                 outeq.Add(ineq[i].CombineAndReduce(ineq[0]));
@@ -406,60 +406,60 @@ namespace Casascius.Bitcoin {
     }
 
 
-        public class coefficient {
+        public class Coefficient {
         public long multiplier;
         public long vindex;
        
-        public coefficient(long m, long v) {
+        public Coefficient(long m, long v) {
             multiplier = m;
             vindex = v;
         }
     }
 
-        public class equation {
-            public List<coefficient> leftside = new List<coefficient>();
-            public List<coefficient> rightside = new List<coefficient>();
+        public class Equation {
+            public List<Coefficient> leftside = new List<Coefficient>();
+            public List<Coefficient> rightside = new List<Coefficient>();
             public BigInteger subtractor = BigInteger.Zero;
             public long divisor = 1;
 
-            public equation() { }
+            public Equation() { }
 
-            public equation CombineAndReduce(equation othereq) {
+            public Equation CombineAndReduce(Equation othereq) {
                 long topmultiplier = 0, bottommultiplier = 0;
 
                 // This function considers "this" the top, and othereq the bottom.
-                // It multiplies both equations by the first coefficient of the opposite equation,
-                // and then subtracts the bottom from the top, eliminating the first coefficient from
+                // It multiplies both equations by the first Coefficient of the opposite Equation,
+                // and then subtracts the bottom from the top, eliminating the first Coefficient from
                 // the left side, and adding coefficients to the right.
 
-                equation neweq = new equation();
+                Equation neweq = new Equation();
                 othereq.KillFactors();
 
                 for (int i = 0; i < leftside.Count; i++) {
-                    coefficient topco = leftside[i];
-                    coefficient bottomco = othereq.leftside[i];
+                    Coefficient topco = leftside[i];
+                    Coefficient bottomco = othereq.leftside[i];
 
                     if (i == 0) {
                         topmultiplier = bottomco.multiplier;
                         bottommultiplier = topco.multiplier;
-                        // avoid saving a coefficient because the multiplier and subtraction guarantee they cancel
+                        // avoid saving a Coefficient because the multiplier and subtraction guarantee they cancel
                     } else {
-                        neweq.leftside.Add(new coefficient(topco.multiplier * topmultiplier - bottomco.multiplier * bottommultiplier, topco.vindex));
+                        neweq.leftside.Add(new Coefficient(topco.multiplier * topmultiplier - bottomco.multiplier * bottommultiplier, topco.vindex));
                     }
                 }
 
                 for (int i = 0; i < 8; i++) {
                     long multiplier = 0;
-                    foreach (coefficient r in rightside) {
+                    foreach (Coefficient r in rightside) {
                         if (r.vindex == i) multiplier += (r.multiplier * topmultiplier);
                     }
 
-                    foreach (coefficient r in othereq.rightside) {
+                    foreach (Coefficient r in othereq.rightside) {
                         if (r.vindex == i) multiplier -= (r.multiplier * bottommultiplier);
                     }
 
                     if (multiplier != 0) {
-                        neweq.rightside.Add(new coefficient(multiplier, i));
+                        neweq.rightside.Add(new Coefficient(multiplier, i));
                     }
                 }
 
@@ -469,23 +469,23 @@ namespace Casascius.Bitcoin {
             }
 
 
-            public equation(int partnumber0, int partcount, int partsequence0) {
-                // create one leftside coefficient for each partcount
+            public Equation(int partnumber0, int partcount, int partsequence0) {
+                // create one leftside Coefficient for each partcount
                 for (int i = 0; i < partcount; i++) {
                     //(i+1) ^ (partsequence0+1)
                     long factor = 1;
                     for (int ii = 0; ii <= partsequence0; ii++) factor = factor * (long)(i + 1);
-                    leftside.Add(new coefficient(factor, i));
+                    leftside.Add(new Coefficient(factor, i));
                 }
 
                 // create a rightside for the part
-                rightside.Add(new coefficient(1, partnumber0));
+                rightside.Add(new Coefficient(1, partnumber0));
 
             }
 
             public BigInteger SolveRight(BigInteger[] pcs) {
                 BigInteger accum = new BigInteger("0");
-                foreach (coefficient c in rightside) {
+                foreach (Coefficient c in rightside) {
                     BigInteger scratch = new BigInteger(pcs[c.vindex].ToString());
                     scratch = scratch.Multiply(new BigInteger(c.multiplier.ToString()));
                     accum = accum.Add(scratch);
@@ -498,7 +498,7 @@ namespace Casascius.Bitcoin {
                     if (v[i] != null && v[i].Equals(BigInteger.Zero) == false) {
                         // find anything on the left that uses this value and eliminate it.
                         for (int j = 0; j < leftside.Count; j++) {
-                            coefficient c = leftside[j];
+                            Coefficient c = leftside[j];
                             if (c.vindex == i) {
                                 // found something - eliminate it
                                 BigInteger accum = v[i];
@@ -524,7 +524,7 @@ namespace Casascius.Bitcoin {
 
                     bool brk = false;
                     // are all left and right side items a factor?
-                    foreach (coefficient c in leftside) {
+                    foreach (Coefficient c in leftside) {
                         if (c.multiplier >= 0) {
                             if ((c.multiplier % myprime) != 0) brk = true;
                         } else {
@@ -532,7 +532,7 @@ namespace Casascius.Bitcoin {
                         }
                     }
                     if (brk) continue;
-                    foreach (coefficient c in rightside) {
+                    foreach (Coefficient c in rightside) {
                         if (c.multiplier >= 0) {
                             if ((c.multiplier % myprime) != 0) brk = true; ;
                         } else {
@@ -543,8 +543,8 @@ namespace Casascius.Bitcoin {
 
                     // reduce the factor and check for primes over again.
 
-                    foreach (coefficient c in leftside) c.multiplier /= myprime;
-                    foreach (coefficient c in rightside) c.multiplier /= myprime;
+                    foreach (Coefficient c in leftside) c.multiplier /= myprime;
+                    foreach (Coefficient c in rightside) c.multiplier /= myprime;
                     i = -1; // start loop over
                 }
             }

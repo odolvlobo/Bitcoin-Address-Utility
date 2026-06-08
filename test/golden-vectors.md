@@ -11,12 +11,13 @@ Any failure means a BouncyCastle v1 → v2 migration regression.
 
 ## Run
 
+xUnit test project — runs under the solution-wide `dotnet test`, or in isolation:
+
 ```text
-dotnet run --project test/GoldenVectors/GoldenVectors.csproj -c Release
+dotnet test test/GoldenVectors/GoldenVectors.csproj
 ```
 
-Exit code = number of failing vectors (0 = `ALL VECTORS PASSED`). Source:
-`test/GoldenVectors/Program.cs`.
+Green = all vectors pass. Source: `test/GoldenVectors/GoldenVectorTests.cs`.
 
 ## Vectors
 
@@ -82,6 +83,13 @@ generated one. Exercises BigInteger secret-splitting math.
 Generate escrow set → derive payment address from invitation code A → recover
 the payment address from an invitation code + payment invitation code. Recovered
 address must equal the derived one. Exercises BigInteger escrow math.
+
+### 8. QR boundary-length encoding
+
+Regression guard: a fixed QR version once made boundary-length payloads throw
+`DataTooLongException`. Each must now produce a bitmap — 34-char address, 58-char
+BIP38 key, ~65-char confirmation-shaped string, and both pubkey hex forms
+(66 / 130 chars). Exercises payload-driven QR version sizing (`BtcAddress.QR`).
 
 ## Notes
 
