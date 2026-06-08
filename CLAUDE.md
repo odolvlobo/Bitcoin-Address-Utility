@@ -10,14 +10,26 @@ Bitcoin Address Utility (Casascius) — a Windows desktop tool for generating an
 
 ## Build / run
 
-- WinForms app, **.NET Framework 4.0**, `x86`. No cross-platform support.
-- Solution: `BtcAddress.sln`. Build in Visual Studio or `msbuild BtcAddress.sln /p:Configuration=Release`.
-- **Two required DLLs are NOT in the repo** (referenced via `HintPath=".\"` — repo root):
-  - `BouncyCastle.Crypto.dll` — get from <http://www.bouncycastle.org/csharp/>
-  - `ThoughtWorks.QRCode.dll`
-  Obtain both and place at repo root before building.
+- WinForms app, **.NET 10** (`net10.0-windows`), `x64`. No cross-platform support.
+- SDK-style project `BtcAddress.csproj` (solution `BtcAddress.sln`). Dependencies restore from NuGet — no manual DLLs.
+
+```powershell
+dotnet build BtcAddress.csproj -c Release
+```
+
+- Single-file self-contained exe (runs on a clean Windows): `dotnet publish BtcAddress.csproj -r win-x64 -c Release -p:PublishSingleFile=true --self-contained true` → `bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe`.
 - Entry point: `Program.Main` launches `BtcAddress.Forms.KeyCollectionView` (NOT `Form1`).
-- **No test project, no lint, no CI.** There is no automated test command. Validation is manual against known crypto vectors.
+- **No lint, no CI.** The only automated check is the golden-vector crypto harness (see below).
+
+### Crypto validation harness
+
+`test/GoldenVectors/` is a separate console project (excluded from the app's compile glob via `<Compile Remove="test\**" />`). It anchors crypto output to public known-answer vectors (priv key `0x01`, BIP38 spec, mini key, Base58Check) plus round-trip self-consistency (M-of-N, escrow). Run after **any** change to crypto/keygen paths:
+
+```powershell
+dotnet run --project test/GoldenVectors/GoldenVectors.csproj -c Release
+```
+
+Exit code = number of failing vectors (0 = `ALL VECTORS PASSED`). Details: `test/golden-vectors.md`.
 
 ## Architecture
 
@@ -59,9 +71,9 @@ Bip38Base
 
 ### Crypto dependencies
 
-- secp256k1 EC math, SHA256, RIPEMD160, `SecureRandom` → BouncyCastle (`Org.BouncyCastle.*`). RNG used in keygen is BouncyCastle's `SecureRandom`, not .NET's.
+- secp256k1 EC math, SHA256, RIPEMD160, `SecureRandom` → BouncyCastle NuGet (`BouncyCastle.Cryptography` v2, namespace `Org.BouncyCastle.*`). RNG used in keygen is BouncyCastle's `SecureRandom`, not .NET's. Migrated from BC v1; `ECPoint.GetEncoded(bool)` compression args were re-derived (BC v1 `Multiply()` returned uncompressed points) — golden vectors guard this.
 - scrypt / PBKDF2 / Salsa20 for BIP38 → bundled `CryptSharp/` (uses `unsafe` blocks).
-- QR codes → ThoughtWorks.QRCode; Code128 barcodes → `Barcode/Barcode128b.cs`.
+- QR codes → `QRCoder` NuGet, wrapped in `Barcode/QR.cs`; Code128 barcodes → `Barcode/Barcode128b.cs`.
 - Printing (paper wallets, vouchers, coin inserts) → `Reports/` + `System.Drawing.Printing`; logic currently lives partly in form code-behind (e.g. `Forms/PaperWalletPrinter.cs`).
 
 ## Conventions
@@ -69,6 +81,10 @@ Bip38Base
 - Address type is carried as a leading byte on the Hash160 (e.g. 0 = Bitcoin mainnet); `AddressBase` accepts 20 bytes (hash only) or 21 bytes (type + hash).
 - When adding key formats or address types, route through `Util` and `StringInterpreter` rather than duplicating Base58/EC logic in forms.
 
-## Planned upgrade
+## Migration status
 
-`upgrade-to-dotnet-10-plan.md` is an agent-executable plan to retarget this to .NET 10 (keeping WinForms), swapping the two unmanaged DLLs for NuGet (`BouncyCastle.Cryptography`, `QRCoder`) and `System.Drawing.Common`. Its release gate is **byte-identical crypto output vs the original 4.0 binary** — preserve that invariant in any migration work. This work happens on branch `feature/upgrade-to-dotnet-10`.
+The .NET Framework 4.0 → .NET 10 retarget is **done** (branch `feature/upgrade-to-dotnet-10`): SDK-style project, NuGet `BouncyCastle.Cryptography` + `QRCoder` replacing the old unmanaged DLLs, WinForms kept. `upgrade-to-dotnet-10-plan.md` is the original plan, retained for context. The original 4.0 binary can't be rebuilt on a modern toolchain, so there is no byte-for-byte golden binary — the release gate is instead **all golden vectors passing** (`test/golden-vectors.md`). Any crypto-path change must keep that green.
+
+## Releases
+
+Releases ship a GnuPG **detached signature** (`BtcAddress.exe.asc`), not Authenticode. Signing key fingerprint `6B6BC26599EC24EF7E29A405EAF050539D0B2925`. Maintainer workflow and verification steps: `SIGNING.md` (user-facing summary in `README.md`).
