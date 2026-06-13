@@ -45,12 +45,7 @@ namespace Casascius.Bitcoin
 
             byte[] bb = new byte[ba.Length + 4];
             Array.Copy(ba, bb, ba.Length);
-            Sha256Digest bcsha256a = new Sha256Digest();
-            bcsha256a.BlockUpdate(ba, 0, ba.Length);
-            byte[] thehash = new byte[32];
-            bcsha256a.DoFinal(thehash, 0);
-            bcsha256a.BlockUpdate(thehash, 0, 32);
-            bcsha256a.DoFinal(thehash, 0);
+            byte[] thehash = ComputeDoubleSha256(ba);
             for (int i = 0; i < 4; i++) bb[ba.Length + i] = thehash[i];
             return Base58.FromByteArray(bb);
         }
@@ -188,13 +183,7 @@ namespace Casascius.Bitcoin
 
             if (IgnoreChecksum == false)
             {
-                Sha256Digest bcsha256a = new Sha256Digest();
-                bcsha256a.BlockUpdate(bb, 0, bb.Length - 4);
-
-                byte[] checksum = new byte[32];  //sha256.ComputeHash(bb, 0, bb.Length - 4);
-                bcsha256a.DoFinal(checksum, 0);
-                bcsha256a.BlockUpdate(checksum, 0, 32);
-                bcsha256a.DoFinal(checksum, 0);
+                byte[] checksum = ComputeDoubleSha256(bb[..^4]);
 
                 for (int i = 0; i < 4; i++)
                 {
@@ -214,13 +203,16 @@ namespace Casascius.Bitcoin
 
         public static string ByteArrayToString(byte[] ba, int offset, int count)
         {
-            string rv = "";
-            int usedcount = 0;
-            for (int i = offset; usedcount < count; i++, usedcount++)
+            if (count == 0) return "";
+
+            // Space-separated uppercase hex, with a trailing space after the last byte.
+            string hex = Convert.ToHexString(ba, offset, count);
+            StringBuilder sb = new StringBuilder(hex.Length + count);
+            for (int i = 0; i < hex.Length; i += 2)
             {
-                rv += String.Format("{0:X2}", ba[i]) + " ";
+                sb.Append(hex, i, 2).Append(' ');
             }
-            return rv;
+            return sb.ToString();
         }
 
 
@@ -258,48 +250,36 @@ namespace Casascius.Bitcoin
         public static byte[] HexStringToBytes(string source, bool testingForValidHex = false)
         {
             List<byte> bytes = new List<byte>();
-            bool gotFirstChar = false;
-            byte accum = 0;
+            StringBuilder run = new StringBuilder();
 
-            foreach (char c in source.ToCharArray())
+            // A delimiter (or end of input) terminates a run of hex chars. Each run is
+            // decoded in pairs left-to-right; a trailing lone nibble becomes a byte with
+            // a zero high nibble (e.g. "A" -> 0x0A), matching the original parser.
+            void FlushRun()
+            {
+                if (run.Length == 0) return;
+                int even = run.Length & ~1;
+                if (even > 0) bytes.AddRange(Convert.FromHexString(run.ToString(0, even)));
+                if (run.Length > even) bytes.Add(Convert.FromHexString("0" + run[even])[0]);
+                run.Clear();
+            }
+
+            foreach (char c in source)
             {
                 if (c == ' ' || c == '-' || c == ':')
                 {
-                    // if we got a space, then accept it as the end if we have 1 character.
-                    if (gotFirstChar)
-                    {
-                        bytes.Add(accum);
-                        accum = 0;
-                        gotFirstChar = false;
-                    }
+                    FlushRun();
                 }
                 else if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f'))
                 {
-                    // get the character's value
-                    byte v = (byte)(c - 0x30);
-                    if (c >= 'A' && c <= 'F') v = (byte)(c + 0x0a - 'A');
-                    if (c >= 'a' && c <= 'f') v = (byte)(c + 0x0a - 'a');
-
-                    if (gotFirstChar == false)
-                    {
-                        gotFirstChar = true;
-                        accum = v;
-                    }
-                    else
-                    {
-                        accum <<= 4;
-                        accum += v;
-                        bytes.Add(accum);
-                        accum = 0;
-                        gotFirstChar = false;
-                    }
+                    run.Append(c);
                 }
-                else
+                else if (testingForValidHex)
                 {
-                    if (testingForValidHex) return null;
+                    return null;
                 }
             }
-            if (gotFirstChar) bytes.Add(accum);
+            FlushRun();
             return bytes.ToArray();
         }
 
@@ -448,11 +428,7 @@ namespace Casascius.Bitcoin
 
         public static byte[] ComputeSha256(byte[] ofwhat)
         {
-            Sha256Digest sha256 = new Sha256Digest();
-            sha256.BlockUpdate(ofwhat, 0, ofwhat.Length);
-            byte[] rv = new byte[32];
-            sha256.DoFinal(rv, 0);
-            return rv;
+            return SHA256.HashData(ofwhat);
         }
 
         public static byte[] ComputeDoubleSha256(string ofwhat)
@@ -463,13 +439,7 @@ namespace Casascius.Bitcoin
 
         public static byte[] ComputeDoubleSha256(byte[] ofwhat)
         {
-            Sha256Digest sha256 = new Sha256Digest();
-            sha256.BlockUpdate(ofwhat, 0, ofwhat.Length);
-            byte[] rv = new byte[32];
-            sha256.DoFinal(rv, 0);
-            sha256.BlockUpdate(rv, 0, rv.Length);
-            sha256.DoFinal(rv, 0);
-            return rv;
+            return SHA256.HashData(SHA256.HashData(ofwhat));
         }
 
         public static Int64 nonce = 0;
