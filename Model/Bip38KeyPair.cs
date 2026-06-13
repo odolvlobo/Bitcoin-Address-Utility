@@ -282,12 +282,12 @@ namespace Casascius.Bitcoin
         /// </summary>
         public Bip38KeyPair(KeyPair key, string passphrase)
         {
-            if (passphrase == null && passphrase == "")
+            if (passphrase == null || passphrase == "")
             {
                 throw new ArgumentException("Passphrase is required");
             }
 
-            if (key == null) throw new ArgumentException("Passphrase is required");
+            if (key == null) throw new ArgumentException("Key is required");
 
             this.IsCompressedPoint = key.IsCompressedPoint;
             this._addressType = key.AddressType;
