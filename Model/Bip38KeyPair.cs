@@ -23,7 +23,6 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using CryptSharp.Utility;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -105,8 +104,7 @@ namespace Casascius.Bitcoin
                 UTF8Encoding utf8 = new UTF8Encoding(false);
                 byte[] addresshash = new byte[] { hex[3], hex[4], hex[5], hex[6] };
 
-                byte[] derivedBytes = new byte[64];
-                SCrypt.ComputeKey(utf8.GetBytes(passphrase), addresshash, 16384, 8, 8, 8, derivedBytes);
+                byte[] derivedBytes = SCrypt.Generate(utf8.GetBytes(passphrase), addresshash, 16384, 8, 8, 64);
 
                 var aes = Aes.Create();
                 aes.KeySize = 256;
@@ -228,8 +226,7 @@ namespace Casascius.Bitcoin
             byte[] addresshashplusownerentropy = new byte[12];
             Array.Copy(hex, 3, addresshashplusownerentropy, 0, 4);
             Array.Copy(intermediate.ownerentropy, 0, addresshashplusownerentropy, 4, 8);
-            byte[] derived = new byte[64];
-            SCrypt.ComputeKey(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 1, derived);
+            byte[] derived = SCrypt.Generate(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 64);
             byte[] derivedhalf2 = new byte[32];
             Array.Copy(derived, 32, derivedhalf2, 0, 32);
 
@@ -299,8 +296,7 @@ namespace Casascius.Bitcoin
             byte[] addrhashfull = Util.ComputeDoubleSha256(key.AddressBase58);
             byte[] addresshash = new byte[] { addrhashfull[0], addrhashfull[1], addrhashfull[2], addrhashfull[3] };
 
-            byte[] derivedBytes = new byte[64];
-            SCrypt.ComputeKey(utf8.GetBytes(passphrase), addresshash, 16384, 8, 8, 8, derivedBytes);
+            byte[] derivedBytes = SCrypt.Generate(utf8.GetBytes(passphrase), addresshash, 16384, 8, 8, 64);
 
             var aes = Aes.Create();
             aes.KeySize = 256;
@@ -379,8 +375,7 @@ namespace Casascius.Bitcoin
             Array.Copy(intermediate.ownerentropy, 0, addresshashplusownerentropy, 4, 8);
 
             // derive encryption key material
-            derived = new byte[64];
-            SCrypt.ComputeKey(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 1, derived);
+            derived = SCrypt.Generate(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 64);
 
             byte[] derivedhalf2 = new byte[32];
             Array.Copy(derived, 32, derivedhalf2, 0, 32);

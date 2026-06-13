@@ -57,6 +57,10 @@ Diverged from the plan's snippet:
 - Added `<PathMap>$(MSBuildProjectDirectory)=.</PathMap>` — normalizes embedded source/pdb paths for reproducible builds.
 - Added an `ItemGroup` removing `test\**` from the app's compile/resource/none globs (the harness is a separate project under `test/`).
 
+> **Superseded (post-v1.1.0):** `AllowUnsafeBlocks` has since been removed. It existed
+> only for the bundled `CryptSharp/` scrypt, which was replaced by BouncyCastle
+> `Org.BouncyCastle.Crypto.Generators.SCrypt.Generate`; no `unsafe` code remains. See `CLAUDE.md`.
+
 ### Config / metadata
 
 - Deleted `app.config`, `Properties/Settings.settings`, `Properties/Settings.Designer.cs`.

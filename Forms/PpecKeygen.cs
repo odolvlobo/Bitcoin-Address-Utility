@@ -26,7 +26,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
 using Casascius.Bitcoin;
-using CryptSharp.Utility;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
