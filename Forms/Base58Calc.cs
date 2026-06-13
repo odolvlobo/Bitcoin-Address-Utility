@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -28,51 +28,68 @@ using System.Text;
 using System.Windows.Forms;
 using Casascius.Bitcoin;
 
-namespace BtcAddress {
-    public partial class Base58Calc : Form {
-        public Base58Calc() {
+namespace BtcAddress
+{
+    public partial class Base58Calc : Form
+    {
+        public Base58Calc()
+        {
             InitializeComponent();
         }
 
-        private void txtHex_TextChanged(object sender, EventArgs e) {
+        private void txtHex_TextChanged(object sender, EventArgs e)
+        {
             if (txtHex.ContainsFocus == false) return;
             byte[] bytes = Util.HexStringToBytes(txtHex.Text);
-            if (useChecksumToolStripMenuItem.Checked) {
+            if (useChecksumToolStripMenuItem.Checked)
+            {
                 txtBase58.Text = Util.ByteArrayToBase58Check(bytes);
-            } else {
+            }
+            else
+            {
                 txtBase58.Text = Base58.FromByteArray(bytes);
             }
 
             UpdateByteCounts();
         }
 
-        private void txtBase58_TextChanged(object sender, EventArgs e) {
+        private void txtBase58_TextChanged(object sender, EventArgs e)
+        {
             if (txtBase58.ContainsFocus == false) return;
             byte[] bytes;
-            if (useChecksumToolStripMenuItem.Checked) {
+            if (useChecksumToolStripMenuItem.Checked)
+            {
                 bytes = Util.Base58CheckToByteArray(txtBase58.Text);
-            } else {
+            }
+            else
+            {
                 bytes = Base58.ToByteArray(txtBase58.Text);
             }
             string hex = "invalid";
-            if (bytes != null) {
+            if (bytes != null)
+            {
                 hex = Util.ByteArrayToString(bytes);
             }
             txtHex.Text = hex;
             UpdateByteCounts();
         }
 
-        private void UpdateByteCounts() {
+        private void UpdateByteCounts()
+        {
             lblByteCounts.Text = "Bytes: " + Util.HexStringToBytes(txtHex.Text).Length + "  Base58 length: " + txtBase58.Text.Length;
 
         }
 
-        private void useChecksumToolStripMenuItem_Click(object sender, EventArgs e) {
+        private void useChecksumToolStripMenuItem_Click(object sender, EventArgs e)
+        {
             useChecksumToolStripMenuItem.Checked = !useChecksumToolStripMenuItem.Checked;
             // pretend that whatever had the focus was just changed
-            if (txtBase58.Focused) {
+            if (txtBase58.Focused)
+            {
                 txtBase58_TextChanged(txtBase58, null);
-            } else if (txtHex.Focused) {
+            }
+            else if (txtHex.Focused)
+            {
                 txtHex_TextChanged(txtHex, null);
             }
 

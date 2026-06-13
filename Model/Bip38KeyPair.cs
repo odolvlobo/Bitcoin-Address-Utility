@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -18,32 +18,34 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Security.Cryptography;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Math;
-using CryptSharp.Utility;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace Casascius.Bitcoin {
+namespace Casascius.Bitcoin
+{
     /// <summary>
     /// Represents an encrypted keypair using the methodology described in BIP 38.
     /// </summary>
-    public class Bip38KeyPair : PassphraseKeyPair {
+    public class Bip38KeyPair : PassphraseKeyPair
+    {
 
         /// <summary>
         /// Load constructor (in preparation for decryption)
         /// </summary>
         public Bip38KeyPair(string encryptedkey)
-            : base() {
+            : base()
+        {
             this._encryptedKey = encryptedkey;
 
             byte[] hex = Util.Base58CheckToByteArray(encryptedkey);
@@ -59,38 +61,50 @@ namespace Casascius.Bitcoin {
         /// Validates the binary payload of a Base58-encoded string.
         /// Returns an unthrown exception if validation failed, otherwise null if success.
         /// </summary>
-        public static Exception ValidateBase58(byte[] bytes) {
-            if (bytes == null) {                
+        public static Exception ValidateBase58(byte[] bytes)
+        {
+            if (bytes == null)
+            {
                 return new ArgumentException("Not a valid key");
-            } else if (bytes.Length == 39 && bytes[0] == 1 && bytes[1] == 0x42) {
+            }
+            else if (bytes.Length == 39 && bytes[0] == 1 && bytes[1] == 0x42)
+            {
                 // Casascius BIP passphrase-encrypted key using scrypt
-                if (bytes[2] != 0xc0 && bytes[2] != 0xe0) {
+                if (bytes[2] != 0xc0 && bytes[2] != 0xe0)
+                {
                     return new ArgumentException("Private key is not valid or is a newer format unsupported by this version of the software.");
                 }
-            } else if (bytes.Length == 39 && bytes[0] == 1 && bytes[1] == 0x43) {
-                if ((bytes[2] & 0x24) != bytes[2]) {
+            }
+            else if (bytes.Length == 39 && bytes[0] == 1 && bytes[1] == 0x43)
+            {
+                if ((bytes[2] & 0x24) != bytes[2])
+                {
                     return new ArgumentException("Private key is not valid or is a newer format unsupported by this version of the software.");
                 }
-            } else {
+            }
+            else
+            {
                 return new ArgumentException("Not a BIP38-encoded key");
             }
             return null;
         }
 
-        public override bool DecryptWithPassphrase(string passphrase) {
-            if (passphrase == null) {
+        public override bool DecryptWithPassphrase(string passphrase)
+        {
+            if (passphrase == null)
+            {
                 return false;
             }
 
             byte[] hex = Util.Base58CheckToByteArray(_encryptedKey);
             KeyPair tempkey = null;
 
-            if (hex.Length == 39 && hex[0] == 1 && hex[1] == 0x42) {
+            if (hex.Length == 39 && hex[0] == 1 && hex[1] == 0x42)
+            {
                 UTF8Encoding utf8 = new UTF8Encoding(false);
                 byte[] addresshash = new byte[] { hex[3], hex[4], hex[5], hex[6] };
 
-                byte[] derivedBytes = new byte[64];
-                SCrypt.ComputeKey(utf8.GetBytes(passphrase), addresshash, 16384, 8, 8, 8, derivedBytes);
+                byte[] derivedBytes = SCrypt.Generate(utf8.GetBytes(passphrase), addresshash, 16384, 8, 8, 64);
 
                 var aes = Aes.Create();
                 aes.KeySize = 256;
@@ -116,14 +130,17 @@ namespace Casascius.Bitcoin {
                 sha256.DoFinal(addrhash, 0);
                 sha256.BlockUpdate(addrhash, 0, 32);
                 sha256.DoFinal(addrhash, 0);
-                if (addrhash[0] != hex[3] || addrhash[1] != hex[4] || addrhash[2] != hex[5] || addrhash[3] != hex[6]) {
+                if (addrhash[0] != hex[3] || addrhash[1] != hex[4] || addrhash[2] != hex[5] || addrhash[3] != hex[6])
+                {
                     return false;
                 }
                 _privKey = tempkey.PrivateKeyBytes;
                 _pubKey = tempkey.PublicKeyBytes;
                 _hash160 = tempkey.Hash160;
                 return true;
-            } else if (hex.Length == 39 && hex[0] == 1 && hex[1] == 0x43) {
+            }
+            else if (hex.Length == 39 && hex[0] == 1 && hex[1] == 0x43)
+            {
 
                 // produce the intermediate from the passphrase
 
@@ -133,8 +150,8 @@ namespace Casascius.Bitcoin {
                 Array.Copy(hex, 7, ownersalt, 0, 8);
                 bool includeHashStep = (hex[2] & 4) == 4;
                 Bip38Intermediate intermediate = new Bip38Intermediate(passphrase, ownersalt, includeHashStep);
-				this.LotNumber = intermediate.LotNumber;
-				this.SequenceNumber = intermediate.SequenceNumber;
+                this.LotNumber = intermediate.LotNumber;
+                this.SequenceNumber = intermediate.SequenceNumber;
 
                 tempkey = decryptUsingIntermediate(intermediate, hex);
                 if (verifyAddressHash(tempkey.AddressBase58, hex) == false) return false;
@@ -145,7 +162,8 @@ namespace Casascius.Bitcoin {
             return true;
         }
 
-        private bool verifyAddressHash(string addressBase58, byte[] hex) {
+        private bool verifyAddressHash(string addressBase58, byte[] hex)
+        {
             // check address hash
             UTF8Encoding utf8 = new UTF8Encoding(false);
             Sha256Digest sha256 = new Sha256Digest();
@@ -155,7 +173,8 @@ namespace Casascius.Bitcoin {
             sha256.DoFinal(addrhash, 0);
             sha256.BlockUpdate(addrhash, 0, 32);
             sha256.DoFinal(addrhash, 0);
-            if (addrhash[0] != hex[3] || addrhash[1] != hex[4] || addrhash[2] != hex[5] || addrhash[3] != hex[6]) {
+            if (addrhash[0] != hex[3] || addrhash[1] != hex[4] || addrhash[2] != hex[5] || addrhash[3] != hex[6])
+            {
                 return false;
             }
             return true;
@@ -166,19 +185,22 @@ namespace Casascius.Bitcoin {
         /// Using a pre-generated intermediate allows for fast decryption of batches of keys that were
         /// generated from the same intermediate.
         /// </summary>
-        public bool DecryptWithIntermediate(Bip38Intermediate intermediate) {
+        public bool DecryptWithIntermediate(Bip38Intermediate intermediate)
+        {
             byte[] hex = Util.Base58CheckToByteArray(_encryptedKey);
             // verify that the intermediate has the same ownersalt
             byte[] ownersalt = intermediate.ownerentropy;
-            for (int i = 0; i < 8; i++) {
-                if (hex[i + 7] != ownersalt[i]) {
+            for (int i = 0; i < 8; i++)
+            {
+                if (hex[i + 7] != ownersalt[i])
+                {
                     throw new ArgumentException("Intermediate does not have same salt");
                 }
             }
 
             KeyPair tempkey = decryptUsingIntermediate(intermediate, hex);
             if (verifyAddressHash(tempkey.AddressBase58, hex) == false) return false;
-            
+
             _privKey = tempkey.PrivateKeyBytes;
             _pubKey = tempkey.PublicKeyBytes;
             _hash160 = tempkey.Hash160;
@@ -186,8 +208,10 @@ namespace Casascius.Bitcoin {
 
         }
 
-        private KeyPair decryptUsingIntermediate(Bip38Intermediate intermediate, byte[] hex) {
-            if (intermediate.passfactor == null) {
+        private KeyPair decryptUsingIntermediate(Bip38Intermediate intermediate, byte[] hex)
+        {
+            if (intermediate.passfactor == null)
+            {
                 throw new ArgumentException("This is an encryption-only intermediate code because it was not created from a passphrase.  An intermediate must have been created from passphrase to be used for decryption");
             }
 
@@ -202,8 +226,7 @@ namespace Casascius.Bitcoin {
             byte[] addresshashplusownerentropy = new byte[12];
             Array.Copy(hex, 3, addresshashplusownerentropy, 0, 4);
             Array.Copy(intermediate.ownerentropy, 0, addresshashplusownerentropy, 4, 8);
-            byte[] derived = new byte[64];
-            SCrypt.ComputeKey(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 1, derived);
+            byte[] derived = SCrypt.Generate(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 64);
             byte[] derivedhalf2 = new byte[32];
             Array.Copy(derived, 32, derivedhalf2, 0, 32);
 
@@ -217,7 +240,8 @@ namespace Casascius.Bitcoin {
             byte[] unencryptedpart2 = new byte[16];
             decryptor.TransformBlock(encryptedpart2, 0, 16, unencryptedpart2, 0);
             decryptor.TransformBlock(encryptedpart2, 0, 16, unencryptedpart2, 0);
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < 16; i++)
+            {
                 unencryptedpart2[i] ^= derived[i + 16];
             }
 
@@ -228,7 +252,8 @@ namespace Casascius.Bitcoin {
             byte[] unencryptedpart1 = new byte[16];
             decryptor.TransformBlock(encryptedpart1, 0, 16, unencryptedpart1, 0);
             decryptor.TransformBlock(encryptedpart1, 0, 16, unencryptedpart1, 0);
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < 16; i++)
+            {
                 unencryptedpart1[i] ^= derived[i];
             }
 
@@ -255,12 +280,14 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Encryption constructor (non-EC-multiply)
         /// </summary>
-        public Bip38KeyPair(KeyPair key, string passphrase) {
-            if (passphrase == null && passphrase == "") {
+        public Bip38KeyPair(KeyPair key, string passphrase)
+        {
+            if (passphrase == null || passphrase == "")
+            {
                 throw new ArgumentException("Passphrase is required");
             }
 
-            if (key == null) throw new ArgumentException("Passphrase is required");
+            if (key == null) throw new ArgumentException("Key is required");
 
             this.IsCompressedPoint = key.IsCompressedPoint;
             this._addressType = key.AddressType;
@@ -269,8 +296,7 @@ namespace Casascius.Bitcoin {
             byte[] addrhashfull = Util.ComputeDoubleSha256(key.AddressBase58);
             byte[] addresshash = new byte[] { addrhashfull[0], addrhashfull[1], addrhashfull[2], addrhashfull[3] };
 
-            byte[] derivedBytes = new byte[64];
-            SCrypt.ComputeKey(utf8.GetBytes(passphrase), addresshash, 16384, 8, 8, 8, derivedBytes);
+            byte[] derivedBytes = SCrypt.Generate(utf8.GetBytes(passphrase), addresshash, 16384, 8, 8, 64);
 
             var aes = Aes.Create();
             aes.KeySize = 256;
@@ -310,7 +336,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Encryption constructor to create a new random key from an intermediate
         /// </summary>
-        public Bip38KeyPair(Bip38Intermediate intermediate, bool retainPrivateKeyWhenPossible=false) {
+        public Bip38KeyPair(Bip38Intermediate intermediate, bool retainPrivateKeyWhenPossible = false)
+        {
 
             // generate seedb
             byte[] seedb = new byte[24];
@@ -348,14 +375,14 @@ namespace Casascius.Bitcoin {
             Array.Copy(intermediate.ownerentropy, 0, addresshashplusownerentropy, 4, 8);
 
             // derive encryption key material
-            derived = new byte[64];
-            SCrypt.ComputeKey(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 1, derived);
+            derived = SCrypt.Generate(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 64);
 
             byte[] derivedhalf2 = new byte[32];
             Array.Copy(derived, 32, derivedhalf2, 0, 32);
 
             byte[] unencryptedpart1 = new byte[16];
-            for (int i = 0; i < 16; i++) {
+            for (int i = 0; i < 16; i++)
+            {
                 unencryptedpart1[i] = (byte)(seedb[i] ^ derived[i]);
             }
             byte[] encryptedpart1 = new byte[16];
@@ -371,10 +398,12 @@ namespace Casascius.Bitcoin {
             encryptor.TransformBlock(unencryptedpart1, 0, 16, encryptedpart1, 0);
 
             byte[] unencryptedpart2 = new byte[16];
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 8; i++)
+            {
                 unencryptedpart2[i] = (byte)(encryptedpart1[i + 8] ^ derived[i + 16]);
             }
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < 8; i++)
+            {
                 unencryptedpart2[i + 8] = (byte)(seedb[i + 16] ^ derived[i + 24]);
             }
 
@@ -399,7 +428,8 @@ namespace Casascius.Bitcoin {
 
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
 
-            if (retainPrivateKeyWhenPossible && intermediate.passfactor != null) {
+            if (retainPrivateKeyWhenPossible && intermediate.passfactor != null)
+            {
                 BigInteger privatekey = new BigInteger(1, intermediate.passfactor).Multiply(new BigInteger(1, factorb)).Mod(ps.N);
                 _privKey = new KeyPair(privatekey).PrivateKeyBytes;
 
@@ -415,14 +445,15 @@ namespace Casascius.Bitcoin {
             confirmationCodeInfo[4] = 0x9A;
             // fields for flagbyte, addresshash, and ownerentropy all copy verbatim
             Array.Copy(result, 2, confirmationCodeInfo, 5, 1 + 4 + 8);
-            
+
 
         }
 
         /// <summary>
         /// Returns true if GetConfirmationCode will return a confirmation code, without calculating it.
         /// </summary>
-        public bool IsConfirmationCodeAvailable() {
+        public bool IsConfirmationCodeAvailable()
+        {
             return (_confirmationCode != null || factorb != null);
         }
 
@@ -433,7 +464,8 @@ namespace Casascius.Bitcoin {
         /// This is null if unavailable or not applicable.  When available, calculates upon first
         /// read, which involves an EC multiply and takes a little bit of CPU time.
         /// </summary>
-        public string GetConfirmationCode() {
+        public string GetConfirmationCode()
+        {
             if (_confirmationCode != null) return _confirmationCode;
             if (confirmationCodeInfo == null || factorb == null) return null;
 
@@ -464,10 +496,10 @@ namespace Casascius.Bitcoin {
 
             encryptor.TransformBlock(unencrypted, 0, 16, confirmationCodeInfo, 19);
             encryptor.TransformBlock(unencrypted, 0, 16, confirmationCodeInfo, 19);
-            encryptor.TransformBlock(unencrypted, 16, 16, confirmationCodeInfo, 19+16);
-            encryptor.TransformBlock(unencrypted, 16, 16, confirmationCodeInfo, 19+16);
+            encryptor.TransformBlock(unencrypted, 16, 16, confirmationCodeInfo, 19 + 16);
+            encryptor.TransformBlock(unencrypted, 16, 16, confirmationCodeInfo, 19 + 16);
 
-            _confirmationCode = Util.ByteArrayToBase58Check(confirmationCodeInfo);            
+            _confirmationCode = Util.ByteArrayToBase58Check(confirmationCodeInfo);
             return _confirmationCode;
         }
 
@@ -480,8 +512,8 @@ namespace Casascius.Bitcoin {
         private byte[] confirmationCodeInfo = null, factorb = null, derived = null;
         private string _confirmationCode; // cached confirmation code
 
-		public int LotNumber { get; private set; }
-		public int SequenceNumber { get; private set; }
+        public int LotNumber { get; private set; }
+        public int SequenceNumber { get; private set; }
 
     }
 }

@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-// .NET 8+ BCL defines System.Security.Cryptography.ECPoint, and BouncyCastle 2.x
-// defines Org.BouncyCastle.Crypto.Generators.SCrypt, both of which collide with the
-// types this project uses. These global alias usings disambiguate project-wide.
+// .NET 8+ BCL defines System.Security.Cryptography.ECPoint, which collides with
+// BouncyCastle's Org.BouncyCastle.Math.EC.ECPoint. This global alias disambiguates
+// it project-wide so the BouncyCastle type is used. (BIP38 scrypt resolves
+// Org.BouncyCastle.Crypto.Generators.SCrypt directly via namespace import.)
 global using ECPoint = Org.BouncyCastle.Math.EC.ECPoint;
-global using SCrypt = CryptSharp.Utility.SCrypt;

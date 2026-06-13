@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -18,20 +18,22 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Drawing;
-using System.Security.Cryptography;
-using System.IO;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Casascius.Bitcoin;
 
-namespace BtcAddress {
+namespace BtcAddress
+{
 
     /// <summary>
     /// Represents a printable report producing the materials to go in a two-factor physical Bitcoin piece.
     /// </summary>
-    class CoinInsertDense : CoinInsert {
+    class CoinInsertDense : CoinInsert
+    {
 
         /*
          *
@@ -48,19 +50,19 @@ namespace BtcAddress {
         public List<KeyCollectionItem> keys;
         */
 
-        protected override void OnBeginPrint(System.Drawing.Printing.PrintEventArgs e) {
+        protected override void OnBeginPrint(System.Drawing.Printing.PrintEventArgs e)
+        {
             base.OnBeginPrint(e);
         }
 
 
-        protected override void OnPrintPage(System.Drawing.Printing.PrintPageEventArgs e) {
+        protected override void OnPrintPage(System.Drawing.Printing.PrintPageEventArgs e)
+        {
             baseOnPrintPage(e);
             int printHeight;
             int printWidth;
             int leftMargin;
             int rightMargin;
-            Int32 lines;
-            Int32 chars;
 
             //Set print area size and margins
             {
@@ -75,7 +77,8 @@ namespace BtcAddress {
             int startwidth = 0;
             int startheight = 50;
 
-            for (int i = 0; i < 96; i++) {
+            for (int i = 0; i < 96; i++)
+            {
                 int eachheight = 60, eachwidth = 130;
                 if (keys.Count == 0) break;
 
@@ -97,10 +100,12 @@ namespace BtcAddress {
                 float CircleDiameterInches = (7F / 16F); // 7/16"
 
                 // draw the private key circle
-                using (Pen blackpen = new Pen(Color.Black)) {
+                using (Pen blackpen = new Pen(Color.Black))
+                {
 
                     // print some alignment marks for use in laser cutting
-                    if (i == 0) {
+                    if (i == 0)
+                    {
                         e.Graphics.FillRectangle(Brushes.Black, startwidth + eachwidth * 3F, startheight, 0.01F, 0.01F);
                         e.Graphics.FillRectangle(Brushes.Black, startwidth + eachwidth * 3F, (float)startheight + (float)eachheight * 8.5F, 0.01F, 0.01F);
                         e.Graphics.FillRectangle(Brushes.Black, startwidth + eachwidth * 3F, (float)startheight + (float)eachheight * 17F, 0.01F, 0.01F);
@@ -112,7 +117,8 @@ namespace BtcAddress {
                     e.Graphics.DrawEllipse(blackpen, thiscodeX + 30F, thiscodeY + 10F, CircleDiameterInches * 100F, CircleDiameterInches * 100F);
 
                     // Over 30 characters? do a folding insert at 95% diameter away
-                    if (privkey.Length > 30) {
+                    if (privkey.Length > 30)
+                    {
                         e.Graphics.DrawEllipse(blackpen, thiscodeX + 30F, thiscodeY + 10F + (CircleDiameterInches * 95F), CircleDiameterInches * 100F, CircleDiameterInches * 100F);
                         e.Graphics.FillEllipse(Brushes.White, thiscodeX + 30F, thiscodeY + 10F + (CircleDiameterInches * 95F), CircleDiameterInches * 100F, CircleDiameterInches * 100F);
                     }
@@ -126,26 +132,35 @@ namespace BtcAddress {
                 // if it's going to take two circles, add hyphens
                 if (privkeyleft.Length > 30) privkeyleft = privkeyleft.Substring(0, 29) + "--" + privkeyleft.Substring(29);
                 string privkeytoprint = "";
-                for (int c = 0; c < 11; c++) {
-                    if (charsPerLine[c] == 0) {
+                for (int c = 0; c < 11; c++)
+                {
+                    if (charsPerLine[c] == 0)
+                    {
                         privkeytoprint += "\r\n";
-                    } else {
-                        if (privkeyleft.Length > charsPerLine[c]) {
+                    }
+                    else
+                    {
+                        if (privkeyleft.Length > charsPerLine[c])
+                        {
                             privkeytoprint += privkeyleft.Substring(0, charsPerLine[c]) + "\r\n";
                             privkeyleft = privkeyleft.Substring(charsPerLine[c]);
-                        } else {
+                        }
+                        else
+                        {
                             privkeytoprint += privkeyleft + "\r\n";
                             privkeyleft = "";
                         }
                     }
                 }
-                using (StringFormat sfcenter = new StringFormat()) {
+                using (StringFormat sfcenter = new StringFormat())
+                {
                     sfcenter.Alignment = StringAlignment.Center;
                     e.Graphics.DrawString(privkeytoprint, fontsmall, Brushes.Black, thiscodeX + 30F + (CircleDiameterInches * 100F / 2F), thiscodeY + 14F, sfcenter);
                 }
 
                 // draw the address QR code
-                using (Bitmap b2 = QR.EncodeQRCode(address)) {
+                using (Bitmap b2 = QR.EncodeQRCode(address))
+                {
                     e.Graphics.DrawImage(b2, thiscodeX + 80, thiscodeY + 10, 50, 50);
                 }
 
@@ -160,7 +175,8 @@ namespace BtcAddress {
                 //        +Y                  -X
 
 
-                using (StringFormat sfright = new StringFormat()) {
+                using (StringFormat sfright = new StringFormat())
+                {
                     sfright.Alignment = StringAlignment.Far;
                     e.Graphics.DrawString(address.Substring(0, 12) + "\r\n" + address.Substring(12, 12) + "\r\n" + address.Substring(24), fontsmall, Brushes.Black,
                         -(float)(thiscodeY + 10),
@@ -173,7 +189,8 @@ namespace BtcAddress {
 
 
             }
-            if (keys.Count != 0) {
+            if (keys.Count != 0)
+            {
                 e.HasMorePages = true;
             }
         }

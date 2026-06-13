@@ -7,7 +7,6 @@
     <AssemblyName>BtcAddress</AssemblyName>
     <Platforms>x64</Platforms>
     <PlatformTarget>x64</PlatformTarget>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <Nullable>disable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <ApplicationIcon>bitcoinlogo.ico</ApplicationIcon>
@@ -15,7 +14,7 @@
     <Company>Casascius</Company>
     <Product>BtcAddress</Product>
     <Copyright>Copyright (C) 2012 Mike Caldwell, (C) 2026 odolvlobo</Copyright>
-    <Version>1.1.0.0</Version>
+    <!-- Version lives in Properties/AssemblyInfo.cs. -->
     <!-- Normalize embedded source/pdb paths to project-relative. -->
     <PathMap>$(MSBuildProjectDirectory)=.</PathMap>
   </PropertyGroup>

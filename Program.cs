@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -21,8 +21,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace BtcAddress {
-    static class Program {
+namespace BtcAddress
+{
+    static class Program
+    {
 
         public static Form1 AddressUtility = null;
 
@@ -40,45 +42,57 @@ namespace BtcAddress {
 
         public static BtcAddress.Forms.EscrowTools EscrowTools = null;
 
-        public static void ShowAddressUtility() {
+        public static void ShowAddressUtility()
+        {
             AddressUtility = showForm<Form1>(AddressUtility);
         }
 
-        public static void ShowBase58Calc() {
+        public static void ShowBase58Calc()
+        {
             Base58Calc = showForm<Base58Calc>(Base58Calc);
         }
 
-        public static void ShowMofNcalc() {
+        public static void ShowMofNcalc()
+        {
             MofNcalc = showForm<MofNcalc>(MofNcalc);
         }
 
-        public static void ShowIntermediateGen() {
+        public static void ShowIntermediateGen()
+        {
             IntermediateGen = showForm<PpecKeygen>(IntermediateGen);
         }
 
-        public static void ShowKeyCombiner() {
+        public static void ShowKeyCombiner()
+        {
             KeyCombiner = showForm<KeyCombiner>(KeyCombiner);
         }
 
-        public static void ShowConfValidator() {
+        public static void ShowConfValidator()
+        {
             ConfValidator = showForm<BtcAddress.Forms.Bip38ConfValidator>(ConfValidator);
         }
 
-        public static void ShowKeyDecrypter() {
+        public static void ShowKeyDecrypter()
+        {
             DecryptKey = showForm<BtcAddress.Forms.DecryptKey>(DecryptKey);
         }
 
-        public static void ShowEscrowTools() {
+        public static void ShowEscrowTools()
+        {
             EscrowTools = showForm<BtcAddress.Forms.EscrowTools>(EscrowTools);
 
         }
 
-        private static T showForm<T>(T currentform) where T : Form, new() {
-            if (currentform == null || currentform.Visible == false) {
+        private static T showForm<T>(T currentform) where T : Form, new()
+        {
+            if (currentform == null || currentform.Visible == false)
+            {
                 T rv = new T();
                 rv.Show();
                 return rv;
-            } else {
+            }
+            else
+            {
                 currentform.Focus();
                 return currentform;
             }
@@ -89,10 +103,11 @@ namespace BtcAddress {
         /// The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main() {
+        static void Main()
+        {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            
+
             Application.Run(new BtcAddress.Forms.KeyCollectionView());
         }
     }

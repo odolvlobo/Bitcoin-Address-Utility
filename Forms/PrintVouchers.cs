@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -21,45 +21,52 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Printing;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
-using System.Drawing.Printing;
 using Casascius.Bitcoin;
 
 
-namespace BtcAddress.Forms {
+namespace BtcAddress.Forms
+{
 
     /// <summary>
     /// This is a form for printing vouchers from a selection of KeyCollectionItems which should be prepopulated
     /// before the form is shown.
     /// </summary>
-    public partial class PrintVouchers : Form {
+    public partial class PrintVouchers : Form
+    {
 
 
         public List<KeyCollectionItem> Items = new List<KeyCollectionItem>();
 
         public bool PrintAttempted = false;
 
-        public PrintVouchers() {
+        public PrintVouchers()
+        {
             InitializeComponent();
         }
 
-        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e) {
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
             txtDenomination.Text += ((LinkLabel)sender).Text;
         }
 
-        private void button1_Click(object sender, EventArgs e) {
+        private void button1_Click(object sender, EventArgs e)
+        {
             PrintDialog pd = new PrintDialog();
             PrinterSettings ps = new PrinterSettings();
             pd.PrinterSettings = ps;
             DialogResult dr = pd.ShowDialog();
 
-            if (dr == DialogResult.OK) {
+            if (dr == DialogResult.OK)
+            {
                 QRPrint printer = new QRPrint();
                 printer.PrintMode = QRPrint.PrintModes.PsyBanknote;
                 printer.NotesPerPage = (int)numVouchersPerPage.Value;
-                switch (cboArtworkStyle.Text.ToLower()) {
+                switch (cboArtworkStyle.Text.ToLower())
+                {
                     case "yellow":
                     case "green":
                     case "blue":
@@ -78,12 +85,15 @@ namespace BtcAddress.Forms {
             }
         }
 
-        private void PrintVouchers_Load(object sender, EventArgs e) {
+        private void PrintVouchers_Load(object sender, EventArgs e)
+        {
             this.Text = "Print " + Items.Count + " Vouchers";
             cboArtworkStyle.Text = "Yellow";
 
-            foreach (var i in Items) {
-                if (i.EncryptedKeyPair != null && i.EncryptedKeyPair.IsUnencryptedPrivateKeyAvailable()) {
+            foreach (var i in Items)
+            {
+                if (i.EncryptedKeyPair != null && i.EncryptedKeyPair.IsUnencryptedPrivateKeyAvailable())
+                {
                     chkPrintUnencrypted.Visible = true;
                     break;
                 }

@@ -17,10 +17,16 @@
 
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 // GenerateAssemblyInfo is disabled in BtcAddress.csproj, so assembly metadata
 // is declared explicitly here. (Original attribution to "Microsoft" was wrong;
 // this is Casascius / Mike Caldwell's Bitcoin Address Utility.)
+
+// net10.0-windows normally injects this automatically, but GenerateAssemblyInfo=false
+// suppresses it, leaving the assembly platform-neutral and tripping CA1416 on every
+// WinForms/System.Drawing call. The app is Windows-only, so declare it explicitly.
+[assembly: SupportedOSPlatform("windows")]
 
 [assembly: AssemblyTitle("BtcAddress")]
 [assembly: AssemblyDescription("Bitcoin Address Utility")]
@@ -34,6 +40,6 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 [assembly: Guid("ab22ce72-1f18-4bae-b68c-cab9e3958929")]
 
-[assembly: AssemblyVersion("1.1.0.0")]
-[assembly: AssemblyFileVersion("1.1.0.0")]
-[assembly: AssemblyInformationalVersion("1.1.0")]
+[assembly: AssemblyVersion("1.1.2.0")]
+[assembly: AssemblyFileVersion("1.1.2.0")]
+[assembly: AssemblyInformationalVersion("1.1.2")]

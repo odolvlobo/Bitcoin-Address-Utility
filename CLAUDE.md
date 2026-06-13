@@ -19,17 +19,29 @@ dotnet build BtcAddress.csproj -c Release
 
 - Single-file self-contained exe (runs on a clean Windows): `dotnet publish BtcAddress.csproj -r win-x64 -c Release -p:PublishSingleFile=true --self-contained true` → `bin\Release\net10.0-windows\win-x64\publish\BtcAddress.exe`.
 - Entry point: `Program.Main` launches `BtcAddress.Forms.KeyCollectionView` (NOT `Form1`).
-- **No lint, no CI.** The only automated check is the golden-vector crypto harness (see below).
+- The automated checks are two xUnit test projects under `test/` (both excluded from the app's compile glob via `<Compile Remove="test\**" />`): `UnitTests` (model/util unit tests) and `GoldenVectors` (crypto known-answer harness, see below). Run all:
+
+```powershell
+dotnet test BtcAddress.sln
+```
+
+- **CI:** GitHub Actions workflow `.github/workflows/ci.yml` runs on `windows-latest` (WinForms is Windows-only). Triggers: push to `master`/`develop`/`release/**` and all pull requests. Jobs: `build` + `test` on every trigger; `format` (`dotnet format whitespace --verify-no-changes`) and `lint` (`dotnet format style` + `analyzers --verify-no-changes`) on pull requests only. Format/lint rules come from `.editorconfig`; all jobs fail on problems. Run the gate locally before a PR:
+
+```powershell
+dotnet format whitespace BtcAddress.sln --verify-no-changes
+dotnet format style BtcAddress.sln --verify-no-changes
+dotnet format analyzers BtcAddress.sln --verify-no-changes
+```
 
 ### Crypto validation harness
 
-`test/GoldenVectors/` is a separate console project (excluded from the app's compile glob via `<Compile Remove="test\**" />`). It anchors crypto output to public known-answer vectors (priv key `0x01`, BIP38 spec, mini key, Base58Check) plus round-trip self-consistency (M-of-N, escrow). Run after **any** change to crypto/keygen paths:
+`test/GoldenVectors/` is a separate **xUnit test project** (was a standalone console app pre-migration; kept as its own assembly so it stays the dedicated crypto release gate). It anchors crypto output to public known-answer vectors (priv key `0x01`, BIP38 spec, mini key, Base58Check) plus round-trip self-consistency (M-of-N, escrow) and QR boundary-length encoding. Runs automatically under `dotnet test`; run **after any change to crypto/keygen paths**. Isolate it with:
 
 ```powershell
-dotnet run --project test/GoldenVectors/GoldenVectors.csproj -c Release
+dotnet test test/GoldenVectors/GoldenVectors.csproj
 ```
 
-Exit code = number of failing vectors (0 = `ALL VECTORS PASSED`). Details: `test/golden-vectors.md`.
+Green = all vectors pass. Details: `test/golden-vectors.md`.
 
 ## Architecture
 
@@ -37,7 +49,6 @@ Exit code = number of failing vectors (0 = `ALL VECTORS PASSED`). Details: `test
 
 - `Casascius.Bitcoin` — all of `Model/` (the crypto + domain core).
 - `BtcAddress` and `BtcAddress.Forms` — `Forms/` (WinForms UI). Note: forms live in **both** namespaces; check `using` and `Program.cs` references.
-- `CryptSharp.Utility` — `CryptSharp/` (SCrypt, Pbkdf2, Salsa20 — used by BIP38).
 - `PC` — `Reports/` printing components.
 
 ### Core: `Model/Bitcoin.cs`
@@ -65,14 +76,14 @@ Bip38Base
 ```
 
 - `Address.cs` / `PublicKey.cs` / `KeyPair.cs` are the spine. Most forms operate on a `KeyPair` or `AddressBase`.
-- BIP38 (`Bip38*.cs`) depends on `CryptSharp` SCrypt + AES; the most complex and security-sensitive code path.
+- BIP38 (`Bip38*.cs`) depends on BouncyCastle SCrypt (`Org.BouncyCastle.Crypto.Generators.SCrypt`) + AES; the most complex and security-sensitive code path.
 - `MofN.cs` and `EscrowCode.cs` do BigInteger-heavy secret splitting/escrow math via BouncyCastle.
 - `StringInterpreter.cs` parses arbitrary user input (hex, WIF, Base58, mini key, etc.) into the right model type — the glue between UI text fields and the model.
 
 ### Crypto dependencies
 
 - secp256k1 EC math, SHA256, RIPEMD160, `SecureRandom` → BouncyCastle NuGet (`BouncyCastle.Cryptography` v2, namespace `Org.BouncyCastle.*`). RNG used in keygen is BouncyCastle's `SecureRandom`, not .NET's. Migrated from BC v1; `ECPoint.GetEncoded(bool)` compression args were re-derived (BC v1 `Multiply()` returned uncompressed points) — golden vectors guard this.
-- scrypt / PBKDF2 / Salsa20 for BIP38 → bundled `CryptSharp/` (uses `unsafe` blocks).
+- scrypt for BIP38 → BouncyCastle `Org.BouncyCastle.Crypto.Generators.SCrypt.Generate` (resolved via the `SCrypt` namespace import; golden vectors guard byte-for-byte output). Replaced the formerly bundled `CryptSharp/` (scrypt/PBKDF2/Salsa20, `unsafe`).
 - QR codes → `QRCoder` NuGet, wrapped in `Barcode/QR.cs`; Code128 barcodes → `Barcode/Barcode128b.cs`.
 - Printing (paper wallets, vouchers, coin inserts) → `Reports/` + `System.Drawing.Printing`; logic currently lives partly in form code-behind (e.g. `Forms/PaperWalletPrinter.cs`).
 
@@ -80,6 +91,7 @@ Bip38Base
 
 - Address type is carried as a leading byte on the Hash160 (e.g. 0 = Bitcoin mainnet); `AddressBase` accepts 20 bytes (hash only) or 21 bytes (type + hash).
 - When adding key formats or address types, route through `Util` and `StringInterpreter` rather than duplicating Base58/EC logic in forms.
+- **File encoding:** `*.cs` is UTF-8 **without** BOM, CI-enforced via `.editorconfig` (`charset = utf-8` under `[*.cs]`; `dotnet format whitespace` fails on a BOM). Generated `*.Designer.cs` and `*.resx` are excluded by the formatter and keep their existing BOMs — leave those alone (the VS designer rewrites `.Designer.cs` with a BOM anyway, and `.resx` XML expects one). For any other new file, prefer UTF-8 without BOM unless a BOM is genuinely needed (real UTF-16/UTF-32, a legacy Windows tool that sniffs BOM, Excel-targeted CSV).
 
 ## Migration status
 

@@ -1,4 +1,4 @@
-﻿// Bitcoin Address Utility
+// Bitcoin Address Utility
 // Copyright (C) 2012 Mike Caldwell
 // Copyright (C) 2026 odolvlobo
 //
@@ -18,20 +18,21 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Security.Cryptography;
+using System.Text;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Math;
-using CryptSharp.Utility;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace Casascius.Bitcoin {
-    public class Bip38Confirmation : Bip38Base {
+namespace Casascius.Bitcoin
+{
+    public class Bip38Confirmation : Bip38Base
+    {
 
         /// <summary>
         /// The public key of the confirmed address, once properly decrypted with a passphrase.
@@ -39,8 +40,10 @@ namespace Casascius.Bitcoin {
         /// </summary>
         public PublicKey PublicKey { get; private set; }
 
-        public bool PublicKeyIsPresent {
-            get {
+        public bool PublicKeyIsPresent
+        {
+            get
+            {
                 return PublicKey != null;
             }
         }
@@ -49,19 +52,23 @@ namespace Casascius.Bitcoin {
         /// Returns true if the confirmation code indicates that the Bitcoin address must be formed by
         /// hashing a compressed point.
         /// </summary>
-        public bool IsCompressedPoint {
-            get {
+        public bool IsCompressedPoint
+        {
+            get
+            {
                 return (flagbyte & 0x20) == 0x20;
             }
         }
 
-        public override bool LotSequencePresent {
-            get {
+        public override bool LotSequencePresent
+        {
+            get
+            {
                 return (flagbyte & 0x04) == 0x04;
             }
         }
 
-        
+
         public byte flagbyte { get; private set; }
 
         private byte[] _addressHash;
@@ -77,9 +84,11 @@ namespace Casascius.Bitcoin {
         /// parsing was not possible.  Parsing does not validate whether decryption is possible.
         /// When parsing is successful, use DecryptWithPassphrase to perform the validation and generate PublicKey.
         /// </summary>
-        public Bip38Confirmation(string base58CheckString) {
+        public Bip38Confirmation(string base58CheckString)
+        {
             byte[] bytes = Util.Base58CheckToByteArray(base58CheckString);
-            if (bytes == null) {
+            if (bytes == null)
+            {
                 throw new ArgumentException("This is not a valid confirmation code. (Not a valid Base58Check string)");
             }
 
@@ -103,24 +112,28 @@ namespace Casascius.Bitcoin {
             Array.Copy(bytes, 18, _encryptedpointb, 0, 33);
         }
 
-        public static Exception ValidateBase58(byte[] bytes) {
-            if (bytes==null || 
-                bytes.Length != 51 || 
+        public static Exception ValidateBase58(byte[] bytes)
+        {
+            if (bytes == null ||
+                bytes.Length != 51 ||
                 // check the magic
                 bytes[0] != 0x64 || bytes[1] != 0x3B || bytes[2] != 0xF6 ||
-                bytes[3] != 0xA8 || bytes[4] != 0x9A || 
+                bytes[3] != 0xA8 || bytes[4] != 0x9A ||
                 // check valid values for first byte of pointb
-                bytes[18] < 0x02 || bytes[18] > 0x03) {
+                bytes[18] < 0x02 || bytes[18] > 0x03)
+            {
                 return new ArgumentException("This is not a valid confirmation code.");
             }
             return null;
         }
 
-        public Exception DecryptWithPassphrase(string passphrase) {
+        public Exception DecryptWithPassphrase(string passphrase)
+        {
             // check for null entry
-            if (passphrase == null || passphrase == "") {
+            if (passphrase == null || passphrase == "")
+            {
                 return new ArgumentException("Passphrase is required");
-			}
+            }
 
             Bip38Intermediate intermediate = new Bip38Intermediate(passphrase, _ownerentropy, LotSequencePresent);
 
@@ -131,8 +144,7 @@ namespace Casascius.Bitcoin {
             byte[] addresshashplusownerentropy = Util.ConcatenateByteArrays(_addressHash, intermediate.ownerentropy);
 
             // derive encryption key material
-            byte[] derived = new byte[64];
-            SCrypt.ComputeKey(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 1, derived);
+            byte[] derived = SCrypt.Generate(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 64);
 
             byte[] derivedhalf2 = new byte[32];
             Array.Copy(derived, 32, derivedhalf2, 0, 32);
@@ -159,7 +171,8 @@ namespace Casascius.Bitcoin {
             // reconstitute the ECPoint
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             ECPoint point;
-            try {
+            try
+            {
                 point = ps.Curve.DecodePoint(unencryptedpubkey);
 
                 // multiply passfactor.
@@ -181,18 +194,22 @@ namespace Casascius.Bitcoin {
                 sha256.BlockUpdate(addresshashfull, 0, 32);
                 sha256.DoFinal(addresshashfull, 0);
 
-                for (int i = 0; i < 4; i++) {
-                    if (addresshashfull[i] != _addressHash[i]) {
+                for (int i = 0; i < 4; i++)
+                {
+                    if (addresshashfull[i] != _addressHash[i])
+                    {
                         return new ArgumentException("This passphrase is wrong or does not belong to this confirmation code.");
                     }
                 }
 
                 this.PublicKey = generatedaddress;
-            } catch {
+            }
+            catch
+            {
                 return new ArgumentException("This passphrase is wrong or does not belong to this confirmation code.");
             }
             return null;
-        }    
+        }
     }
 
 }

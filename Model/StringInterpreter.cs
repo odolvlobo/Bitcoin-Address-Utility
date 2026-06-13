@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -22,14 +22,17 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Casascius.Bitcoin {
+namespace Casascius.Bitcoin
+{
 
-    public class StringInterpreter {
+    public class StringInterpreter
+    {
 
         /// <summary>
         /// Scans a string for any valid Base58Check-encoded substrings, and returns them as objects.
         /// </summary>
-        public static List<object> InterpretBatch(string what, bool compressed = false, byte addressType = 0) {
+        public static List<object> InterpretBatch(string what, bool compressed = false, byte addressType = 0)
+        {
             int biggest_anticipated_string = 100;
             char[] curstring = new char[biggest_anticipated_string];
             int curstringidx = 0;
@@ -40,36 +43,54 @@ namespace Casascius.Bitcoin {
             HashSet<string> seenStrings = new HashSet<string>();
 
             // 123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz
-            for (int i = 0; i < incharcount; i++) {
+            for (int i = 0; i < incharcount; i++)
+            {
                 char c = inchars[i];
                 bool isbase58 = false;
-                if (c >= '1' && c <= '9') {
+                if (c >= '1' && c <= '9')
+                {
                     isbase58 = true;
-                } else if (c >= 'A' && c <= 'H') {
+                }
+                else if (c >= 'A' && c <= 'H')
+                {
                     isbase58 = true;
-                } else if (c >= 'J' && c <= 'N') {
+                }
+                else if (c >= 'J' && c <= 'N')
+                {
                     isbase58 = true;
-                } else if (c >= 'P' && c <= 'Z') {
+                }
+                else if (c >= 'P' && c <= 'Z')
+                {
                     isbase58 = true;
-                } else if (c >= 'a' && c <= 'k') {
+                }
+                else if (c >= 'a' && c <= 'k')
+                {
                     isbase58 = true;
-                } else if (c >= 'm' && c <= 'z') {
+                }
+                else if (c >= 'm' && c <= 'z')
+                {
                     isbase58 = true;
-                } else {
+                }
+                else
+                {
                     // Not a base58 character
                 }
 
-                if (isbase58) {
+                if (isbase58)
+                {
                     curstring[curstringidx++] = c;
                     if (curstringidx >= biggest_anticipated_string) curstringidx--;
                 }
 
                 // Should we interpret curstring?
-                if (curstringidx > 0) {
-                    if (isbase58 == false || i == (incharcount - 1)) {
+                if (curstringidx > 0)
+                {
+                    if (isbase58 == false || i == (incharcount - 1))
+                    {
                         string trystring = new string(curstring, 0, curstringidx);
                         // Use the hashset to avoid interpreting the same string more than once.
-                        if (seenStrings.Add(trystring)) {
+                        if (seenStrings.Add(trystring))
+                        {
                             // add returns true to indicate added to the HashSet, false indicates it was already there
                             object interpretation = Interpret(trystring, compressed, addressType);
                             if (interpretation != null)
@@ -86,17 +107,21 @@ namespace Casascius.Bitcoin {
         /// Interprets a string to automatically detect a type of Bitcoin-related object.
         /// compressed and addresstype are only considered when the object doesn't define these itself.
         /// </summary>
-        public static object Interpret(string what, bool compressed = false, byte addressType = 0) {
+        public static object Interpret(string what, bool compressed = false, byte addressType = 0)
+        {
             if (what == null) return null;
-            
+
             what = what.Trim();
 
             // Is the string interpretable as base58?
             byte[] hex = Util.Base58CheckToByteArray(what);
 
-            if (hex != null) {
-                try {
-                    switch (hex.Length) {
+            if (hex != null)
+            {
+                try
+                {
+                    switch (hex.Length)
+                    {
                         case 21:
                             // It's an address of some sort.
                             return new AddressBase(what);
@@ -110,7 +135,7 @@ namespace Casascius.Bitcoin {
                             // these pairs aren't decided by length alone,
                             // but the constructors will throw an exception if they
                             // don't contain valid key material.
-                            return new ShaPassphraseKeyPair(what);                        
+                            return new ShaPassphraseKeyPair(what);
                         case 39:
                             return new Bip38KeyPair(what);
                         case 49:
@@ -118,15 +143,19 @@ namespace Casascius.Bitcoin {
                         case 51:
                             return new Bip38Confirmation(what);
                     }
-                } catch {}
+                }
+                catch { }
                 // If a constructor didn't like something, then don't return anything.                
             }
 
 
             hex = Util.HexStringToBytes(what, true);
-            if (hex != null) {
-                try {
-                    switch (hex.Length) {
+            if (hex != null)
+            {
+                try
+                {
+                    switch (hex.Length)
+                    {
                         case 33:
                         case 65:
                             return new PublicKey(hex);
@@ -139,7 +168,8 @@ namespace Casascius.Bitcoin {
                         case 32:
                             return new KeyPair(hex, compressed: compressed, addressType: addressType);
                     }
-                } catch { }
+                }
+                catch { }
             }
 
             if (MiniKeyPair.IsValidMiniKey(what) == 1) return new MiniKeyPair(what);

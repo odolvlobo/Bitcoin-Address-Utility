@@ -1,4 +1,4 @@
-﻿// Copyright 2012 Mike Caldwell (Casascius)
+// Copyright 2012 Mike Caldwell (Casascius)
 // Copyright (C) 2026 odolvlobo
 // This file is part of Bitcoin Address Utility.
 
@@ -18,27 +18,28 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Security.Cryptography;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Generators;
 using Org.BouncyCastle.Crypto.Parameters;
-using Org.BouncyCastle.Security;
-using Org.BouncyCastle.Math.EC;
 using Org.BouncyCastle.Math;
-using CryptSharp.Utility;
+using Org.BouncyCastle.Math.EC;
+using Org.BouncyCastle.Security;
 
-namespace Casascius.Bitcoin {
+namespace Casascius.Bitcoin
+{
 
     /// <summary>
     /// A KeyPair represents a Bitcoin address and its known private key.
     /// </summary>
-    public class KeyPair : PublicKey {
+    public class KeyPair : PublicKey
+    {
         protected KeyPair() { }
 
         private static Int64 nonce;
@@ -46,7 +47,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Creates a new key pair using the SHA256 hash of a given string as the private key.
         /// </summary>
-        public static KeyPair CreateFromString(string tohash) {            
+        public static KeyPair CreateFromString(string tohash)
+        {
             UTF8Encoding utf8 = new UTF8Encoding(false);
             byte[] forsha = utf8.GetBytes(tohash);
             Sha256Digest sha256 = new Sha256Digest();
@@ -60,7 +62,8 @@ namespace Casascius.Bitcoin {
         /// Creates a new random key pair, using a user-provided string to add entropy to the
         /// SecureRandom generator provided by the .NET Framework.
         /// </summary>
-        public static KeyPair Create(string usersalt, bool compressed=false, byte addressType = 0) {
+        public static KeyPair Create(string usersalt, bool compressed = false, byte addressType = 0)
+        {
             if (usersalt == null) usersalt = "ok, whatever";
             usersalt += DateTime.UtcNow.Ticks.ToString();
 
@@ -71,7 +74,8 @@ namespace Casascius.Bitcoin {
 
             byte[] newkey = new byte[32];
 
-            for (int i = 0; i < 32; i++) {
+            for (int i = 0; i < 32; i++)
+            {
                 long x = sr.NextLong() & long.MaxValue;
                 x += poop[i];
                 newkey[i] = (byte)(x & 0xff);
@@ -83,12 +87,14 @@ namespace Casascius.Bitcoin {
         /// Generates a KeyPair using a BigInteger as a private key.
         /// BigInteger is checked for appropriate range.
         /// </summary>
-        public KeyPair(BigInteger bi, bool compressed = false, byte addressType = 0) {
+        public KeyPair(BigInteger bi, bool compressed = false, byte addressType = 0)
+        {
             this.IsCompressedPoint = compressed;
             this._addressType = addressType;
-            
+
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
-            if (bi.CompareTo(ps.N) >= 0 || bi.SignValue <= 0) {
+            if (bi.CompareTo(ps.N) >= 0 || bi.SignValue <= 0)
+            {
                 throw new ArgumentException("BigInteger is out of range of valid private keys");
             }
             byte[] bb = Util.Force32Bytes(bi.ToByteArrayUnsigned());
@@ -99,12 +105,16 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Create a Bitcoin address from a 32-byte private key
         /// </summary>
-        public KeyPair(byte[] bytes, bool compressed=false, byte addressType=0) {
-            if (bytes.Length == 32) {
+        public KeyPair(byte[] bytes, bool compressed = false, byte addressType = 0)
+        {
+            if (bytes.Length == 32)
+            {
                 PrivateKeyBytes = bytes;
                 this.IsCompressedPoint = compressed;
                 this._addressType = addressType;
-            } else {
+            }
+            else
+            {
                 throw new ArgumentException("Byte array provided to KeyPair constructor must be 32 bytes long");
             }
         }
@@ -112,7 +122,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Create a Bitcoin address from a key represented in a string.
         /// </summary>
-        public KeyPair(string key, bool compressed=false, byte addressType=0) {
+        public KeyPair(string key, bool compressed = false, byte addressType = 0)
+        {
             this._addressType = addressType;
             string result = constructWithKey(key, compressed);
             if (result != null) throw new ArgumentException(result);
@@ -122,50 +133,67 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Constructs the object with string key, returning any intended exception as a string.
         /// </summary>
-        private string constructWithKey(string key, bool compressed) {
+        private string constructWithKey(string key, bool compressed)
+        {
             byte[] hex = Util.Base58CheckToByteArray(key);
-            if (hex == null) {
+            if (hex == null)
+            {
                 hex = Util.HexStringToBytes(key, true);
-                if (hex == null) {
+                if (hex == null)
+                {
                     // tolerate a minikey
-                    if (MiniKeyPair.IsValidMiniKey(key) > 0) {
+                    if (MiniKeyPair.IsValidMiniKey(key) > 0)
+                    {
                         PrivateKeyBytes = new MiniKeyPair(key).PrivateKeyBytes;
                         return null;
-                    } else {
+                    }
+                    else
+                    {
                         return "Invalid private key";
                     }
                 }
             }
-            if (hex.Length == 32) {
+            if (hex.Length == 32)
+            {
                 _privKey = new byte[32];
                 Array.Copy(hex, 0, _privKey, 0, 32);
                 IsCompressedPoint = compressed;
-            } else if (hex.Length == 33 && hex[0] == 0x80) {
+            }
+            else if (hex.Length == 33 && hex[0] == 0x80)
+            {
                 // normal private key
                 _privKey = new byte[32];
                 Array.Copy(hex, 1, _privKey, 0, 32);
                 IsCompressedPoint = false;
-            } else if (hex.Length == 34 && hex[0] == 0x80 && hex[33] == 0x01) {
+            }
+            else if (hex.Length == 34 && hex[0] == 0x80 && hex[33] == 0x01)
+            {
                 // compressed private key
                 _privKey = new byte[32];
                 Array.Copy(hex, 1, _privKey, 0, 32);
                 IsCompressedPoint = true;
-            } else if (key.StartsWith("6")) {
+            }
+            else if (key.StartsWith("6"))
+            {
                 return "Key is encrypted, decrypt first.";
-            } else {
+            }
+            else
+            {
                 return "Not a recognized private key format";
             }
             return validateRange();
-            
+
         }
 
         /// <summary>
         /// Returns error message in a string if private key is not within the valid range (2 ... N-1)
         /// </summary>
-        private string validateRange() {
+        private string validateRange()
+        {
             Org.BouncyCastle.Math.BigInteger Db = new Org.BouncyCastle.Math.BigInteger(1, _privKey);
             BigInteger N = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1").N;
-            if (Db == BigInteger.Zero || Db.CompareTo(N) >= 0) {
+            if (Db == BigInteger.Zero || Db.CompareTo(N) >= 0)
+            {
                 return "Not a valid private key";
             }
             return null;
@@ -174,7 +202,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Returns true if a given string can be turned into a private key.
         /// </summary>
-        public static bool IsValidPrivateKey(string key) {
+        public static bool IsValidPrivateKey(string key)
+        {
             KeyPair kp = new KeyPair();
             string result = kp.constructWithKey(key, false);
             return (result == null);
@@ -184,13 +213,16 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Provides access to the private key.
         /// </summary>
-        public byte[] PrivateKeyBytes {
-            get {
+        public byte[] PrivateKeyBytes
+        {
+            get
+            {
                 byte[] rv = new byte[_privKey.Length];
                 _privKey.CopyTo(rv, 0);
                 return rv;
             }
-            protected set {
+            protected set
+            {
                 if (value == null || value.Length < 32 || value.Length > 33) throw new ArgumentException("Must be 32 bytes");
 
                 _privKey = new byte[32];
@@ -204,7 +236,8 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Computes the public key from the private key.
         /// </summary>
-        protected override byte[] ComputePublicKey() {
+        protected override byte[] ComputePublicKey()
+        {
             var ps = Org.BouncyCastle.Asn1.Sec.SecNamedCurves.GetByName("secp256k1");
             ECPoint point = ps.G;
 
@@ -219,11 +252,14 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Returns the private key as a string of hexadecimal digits.
         /// </summary>
-        public string PrivateKeyHex {
-            get {
+        public string PrivateKeyHex
+        {
+            get
+            {
                 return Util.ByteArrayToString(PrivateKeyBytes);
             }
-            protected set {
+            protected set
+            {
                 byte[] hex = Util.ValidateAndGetHexPrivateKey(0x80, value, 32);
                 if (hex == null) throw new ApplicationException("Invalid private hex key");
                 _privKey = hex;
@@ -233,12 +269,14 @@ namespace Casascius.Bitcoin {
         /// <summary>
         /// Returns the private key in the most preferred display format for the type.
         /// </summary>
-        public virtual string PrivateKey {
-            get {
+        public virtual string PrivateKey
+        {
+            get
+            {
                 return PrivateKeyBase58;
             }
         }
-        
+
 
         /// <summary>
         /// Getter: Returns the private key, either unencrypted if no password was set, or encrypted
@@ -246,28 +284,35 @@ namespace Casascius.Bitcoin {
         /// Setter: Accepts a private key in wallet import format.  If the private key is encrypted, the
         /// correct Passphrase must have been set, or else an ApplicationException will be thrown.
         /// </summary>
-        public string PrivateKeyBase58 {
-            get {
+        public string PrivateKeyBase58
+        {
+            get
+            {
                 if (_privKey.Length != 32) throw new ApplicationException("Not a valid private key");
 
-                if (IsCompressedPoint) {
+                if (IsCompressedPoint)
+                {
                     byte[] rv = new byte[34];
                     Array.Copy(_privKey, 0, rv, 1, 32);
                     rv[0] = 0x80;
                     rv[33] = 1;
                     return Util.ByteArrayToBase58Check(rv);
-                } else {
+                }
+                else
+                {
                     byte[] rv = new byte[33];
                     Array.Copy(_privKey, 0, rv, 1, 32);
                     rv[0] = 0x80;
                     return Util.ByteArrayToBase58Check(rv);
                 }
             }
-            protected set {
+            protected set
+            {
 
                 byte[] hex = Util.Base58CheckToByteArray(value);
 
-                if (hex == null) {
+                if (hex == null)
+                {
                     throw new ApplicationException("WIF private key is not valid.");
                 }
 
@@ -275,20 +320,25 @@ namespace Casascius.Bitcoin {
                 // pywallet seems to produce and accept keys like this... they are private keys starting with 00 or 0000 and
                 // they pass the base58 check but are missing leading byte(s) that were never put into the original payload.
                 // We will simply fill in the missing bytes with 00's.
-                if (hex.Length == 29 || hex.Length == 30 || hex.Length == 31 || hex.Length == 32) {
+                if (hex.Length == 29 || hex.Length == 30 || hex.Length == 31 || hex.Length == 32)
+                {
                     byte[] hex2 = new byte[33];
                     hex2[0] = hex[0];
                     Array.Copy(hex, 1, hex2, 34 - hex.Length, hex.Length - 1);
                     hex = hex2;
                 }
 
-                if (hex.Length != 33) {
+                if (hex.Length != 33)
+                {
                     throw new ApplicationException("WIF private key is not valid (wrong byte count, should be 33, was " + hex.Length + ")");
                 }
 
-                if (hex[0] == 0x82) {
+                if (hex[0] == 0x82)
+                {
                     this.IsCompressedPoint = true;
-                } else if (hex[0] != 0x80) {
+                }
+                else if (hex[0] != 0x80)
+                {
                     throw new ApplicationException("This is a valid base58 string but it has no Wallet Import Format identifier.");
                 }
 
