@@ -49,7 +49,6 @@ Green = all vectors pass. Details: `test/golden-vectors.md`.
 
 - `Casascius.Bitcoin` — all of `Model/` (the crypto + domain core).
 - `BtcAddress` and `BtcAddress.Forms` — `Forms/` (WinForms UI). Note: forms live in **both** namespaces; check `using` and `Program.cs` references.
-- `CryptSharp.Utility` — `CryptSharp/` (SCrypt, Pbkdf2, Salsa20 — used by BIP38).
 - `PC` — `Reports/` printing components.
 
 ### Core: `Model/Bitcoin.cs`
@@ -77,14 +76,14 @@ Bip38Base
 ```
 
 - `Address.cs` / `PublicKey.cs` / `KeyPair.cs` are the spine. Most forms operate on a `KeyPair` or `AddressBase`.
-- BIP38 (`Bip38*.cs`) depends on `CryptSharp` SCrypt + AES; the most complex and security-sensitive code path.
+- BIP38 (`Bip38*.cs`) depends on BouncyCastle SCrypt (`Org.BouncyCastle.Crypto.Generators.SCrypt`) + AES; the most complex and security-sensitive code path.
 - `MofN.cs` and `EscrowCode.cs` do BigInteger-heavy secret splitting/escrow math via BouncyCastle.
 - `StringInterpreter.cs` parses arbitrary user input (hex, WIF, Base58, mini key, etc.) into the right model type — the glue between UI text fields and the model.
 
 ### Crypto dependencies
 
 - secp256k1 EC math, SHA256, RIPEMD160, `SecureRandom` → BouncyCastle NuGet (`BouncyCastle.Cryptography` v2, namespace `Org.BouncyCastle.*`). RNG used in keygen is BouncyCastle's `SecureRandom`, not .NET's. Migrated from BC v1; `ECPoint.GetEncoded(bool)` compression args were re-derived (BC v1 `Multiply()` returned uncompressed points) — golden vectors guard this.
-- scrypt / PBKDF2 / Salsa20 for BIP38 → bundled `CryptSharp/` (uses `unsafe` blocks).
+- scrypt for BIP38 → BouncyCastle `Org.BouncyCastle.Crypto.Generators.SCrypt.Generate` (resolved via the `SCrypt` namespace import; golden vectors guard byte-for-byte output). Replaced the formerly bundled `CryptSharp/` (scrypt/PBKDF2/Salsa20, `unsafe`).
 - QR codes → `QRCoder` NuGet, wrapped in `Barcode/QR.cs`; Code128 barcodes → `Barcode/Barcode128b.cs`.
 - Printing (paper wallets, vouchers, coin inserts) → `Reports/` + `System.Drawing.Printing`; logic currently lives partly in form code-behind (e.g. `Forms/PaperWalletPrinter.cs`).
 

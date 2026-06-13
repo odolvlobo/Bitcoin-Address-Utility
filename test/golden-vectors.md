@@ -63,7 +63,7 @@ byte-for-byte against the spec.
 | Encrypted | `6PRVWUbkzzsbcVac2qwfssoUJAN1Xhrg6bNk8J7Nzm5H7kxEbn2Nh2ZoGg` |
 
 Checks: encrypt produces the spec string; decrypt of that string recovers the
-WIF. Exercises: scrypt (CryptSharp), AES, the most security-sensitive path.
+WIF. Exercises: scrypt (BouncyCastle), AES, the most security-sensitive path.
 
 ### 5. BIP38 EC-multiply (round-trip)
 

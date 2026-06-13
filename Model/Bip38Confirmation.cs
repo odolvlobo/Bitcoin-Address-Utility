@@ -20,7 +20,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using CryptSharp.Utility;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -145,8 +144,7 @@ namespace Casascius.Bitcoin
             byte[] addresshashplusownerentropy = Util.ConcatenateByteArrays(_addressHash, intermediate.ownerentropy);
 
             // derive encryption key material
-            byte[] derived = new byte[64];
-            SCrypt.ComputeKey(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 1, derived);
+            byte[] derived = SCrypt.Generate(intermediate.passpoint, addresshashplusownerentropy, 1024, 1, 1, 64);
 
             byte[] derivedhalf2 = new byte[32];
             Array.Copy(derived, 32, derivedhalf2, 0, 32);

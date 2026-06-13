@@ -24,7 +24,6 @@ using System.Drawing;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using CryptSharp.Utility;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -243,8 +242,7 @@ namespace Casascius.Bitcoin
             this._lotSequencePresent = entropyContainsLotSequence;
 
             UTF8Encoding utf8 = new UTF8Encoding(false);
-            byte[] prefactorA = new byte[32];
-            SCrypt.ComputeKey(utf8.GetBytes(passphrase), ownersalt, 16384, 8, 8, 8, prefactorA);
+            byte[] prefactorA = SCrypt.Generate(utf8.GetBytes(passphrase), ownersalt, 16384, 8, 8, 32);
 
             if (LotSequencePresent)
             {

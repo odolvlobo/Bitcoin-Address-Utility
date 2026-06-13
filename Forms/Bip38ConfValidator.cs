@@ -26,7 +26,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Windows.Forms;
 using Casascius.Bitcoin;
-using CryptSharp.Utility;
 using Org.BouncyCastle.Asn1;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Crypto.Digests;
@@ -149,8 +148,7 @@ namespace BtcAddress.Forms
             Array.Copy(intermediate.ownerentropy, 0, addresshashplusownersalt, 4, 8);
 
             // derive encryption key material
-            byte[] derived = new byte[64];
-            SCrypt.ComputeKey(intermediate.passpoint, addresshashplusownersalt, 1024, 1, 1, 1, derived);
+            byte[] derived = SCrypt.Generate(intermediate.passpoint, addresshashplusownersalt, 1024, 1, 1, 64);
 
             byte[] derivedhalf2 = new byte[32];
             Array.Copy(derived, 32, derivedhalf2, 0, 32);
